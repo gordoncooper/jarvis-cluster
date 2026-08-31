@@ -29,6 +29,7 @@ spec:
             - { name: OLLAMA_HOST, value: "0.0.0.0:11434" }
             - { name: NVIDIA_VISIBLE_DEVICES, value: all }
             - { name: NVIDIA_DRIVER_CAPABILITIES, value: compute,utility }
+            - { name: OLLAMA_KEEP_ALIVE, value: "-1" }
           resources:
             requests: { nvidia.com/gpu: "1", memory: 4Gi }
             limits:   { nvidia.com/gpu: "1", memory: 12Gi }
