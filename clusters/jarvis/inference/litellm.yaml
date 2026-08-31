@@ -50,7 +50,8 @@ metadata:
   name: litellm
   namespace: inference
   annotations:
-    traefik.ingress.kubernetes.io/router.entrypoints: web
+    traefik.ingress.kubernetes.io/router.entrypoints: websecure
+    traefik.ingress.kubernetes.io/router.tls: "true"
 spec:
   ingressClassName: traefik
   rules:
@@ -61,3 +62,8 @@ spec:
             pathType: Prefix
             backend:
               service: { name: litellm, port: { number: 4000 } }
+
+  tls:
+    - secretName: lan-tls
+      hosts:
+        - llm.lan
