@@ -10,6 +10,9 @@ data:
         litellm_params:
           model: ollama/qwen2.5:7b-instruct-q6_K
           api_base: http://ollama.inference.svc.cluster.local:11434
+          drop_params: true
+        model_info:
+          supports_function_calling: false
       - model_name: jarvis-grok
         litellm_params:
           model: xai/grok-4-fast
