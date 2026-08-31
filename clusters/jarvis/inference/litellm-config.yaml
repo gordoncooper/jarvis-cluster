@@ -8,9 +8,10 @@ data:
     model_list:
       - model_name: jarvis-local
         litellm_params:
-          model: ollama/qwen2.5:7b-instruct-q6_K
+          model: ollama/jarvis
           api_base: http://ollama.inference.svc.cluster.local:11434
           drop_params: true
+          additional_drop_params: ["tools", "tool_choice", "functions"]
         model_info:
           supports_function_calling: false
       - model_name: jarvis-grok

@@ -34,7 +34,7 @@ spec:
             - { name: DEFAULT_MODELS, value: jarvis-local }
             - { name: ENABLE_SIGNUP, value: "true" }
             - { name: WEBUI_AUTH, value: "true" }
-            - { name: ENABLE_NATIVE_FUNCTION_CALLING, value: "false" }
+            - { name: ENABLE_NATIVE_FUNCTION_CALLING, value: "true" }
             - { name: USER_PERMISSIONS_WORKSPACE_TOOLS_ACCESS, value: "false" }
             - { name: ENABLE_FOLLOW_UP_GENERATION, value: "false" }
           volumeMounts:
