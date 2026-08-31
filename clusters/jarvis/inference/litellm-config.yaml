@@ -1,0 +1,26 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: litellm-config
+  namespace: inference
+data:
+  config.yaml: |
+    model_list:
+      - model_name: jarvis-local
+        litellm_params:
+          model: ollama/qwen2.5:7b-instruct-q6_K
+          api_base: http://ollama.inference.svc.cluster.local:11434
+      - model_name: jarvis-grok
+        litellm_params:
+          model: xai/grok-4-fast
+          api_key: os.environ/XAI_API_KEY
+        rpm: 20
+        tpm: 40000
+      - model_name: jarvis-grok-code
+        litellm_params:
+          model: xai/grok-code-fast-1
+          api_key: os.environ/XAI_API_KEY
+        rpm: 10
+        tpm: 30000
+    general_settings:
+      master_key: os.environ/LITELLM_MASTER_KEY

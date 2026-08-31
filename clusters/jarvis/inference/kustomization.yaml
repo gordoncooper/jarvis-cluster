@@ -4,3 +4,5 @@ resources:
   - runtimeclass.yaml
   - device-plugin.yaml
   - ollama.yaml
+  - litellm-config.yaml
+  - litellm.yaml

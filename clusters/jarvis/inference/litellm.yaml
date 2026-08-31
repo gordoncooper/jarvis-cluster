@@ -1,0 +1,63 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: litellm
+  namespace: inference
+spec:
+  replicas: 1
+  selector:
+    matchLabels: { app: litellm }
+  template:
+    metadata:
+      labels: { app: litellm }
+    spec:
+      nodeSelector:
+        jarvis.role: apps
+      containers:
+        - name: litellm
+          image: ghcr.io/berriai/litellm:main-stable
+          args: ["--config", "/app/config.yaml", "--port", "4000", "--num_workers", "1"]
+          ports: [{ name: http, containerPort: 4000 }]
+          env:
+            - name: LITELLM_MASTER_KEY
+              valueFrom: { secretKeyRef: { name: litellm, key: LITELLM_MASTER_KEY } }
+            - name: XAI_API_KEY
+              valueFrom: { secretKeyRef: { name: litellm, key: XAI_API_KEY, optional: true } }
+          volumeMounts:
+            - { name: config, mountPath: /app/config.yaml, subPath: config.yaml }
+          readinessProbe:
+            httpGet: { path: /health/liveliness, port: http }
+            initialDelaySeconds: 20
+          resources:
+            requests: { cpu: 50m, memory: 256Mi }
+            limits: { memory: 1Gi }
+      volumes:
+        - name: config
+          configMap: { name: litellm-config }
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: litellm
+  namespace: inference
+spec:
+  selector: { app: litellm }
+  ports: [{ name: http, port: 4000, targetPort: http }]
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: litellm
+  namespace: inference
+  annotations:
+    traefik.ingress.kubernetes.io/router.entrypoints: web
+spec:
+  ingressClassName: traefik
+  rules:
+    - host: llm.lan
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service: { name: litellm, port: { number: 4000 } }
