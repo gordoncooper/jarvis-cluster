@@ -37,6 +37,8 @@ spec:
             - { name: ENABLE_NATIVE_FUNCTION_CALLING, value: "true" }
             - { name: USER_PERMISSIONS_WORKSPACE_TOOLS_ACCESS, value: "false" }
             - { name: ENABLE_FOLLOW_UP_GENERATION, value: "false" }
+            - { name: WHISPER_MODEL, value: base }
+            - { name: AUDIO_STT_ENGINE, value: "" }
           volumeMounts:
             - { name: data, mountPath: /app/backend/data }
           readinessProbe:
@@ -44,7 +46,7 @@ spec:
             initialDelaySeconds: 30
           resources:
             requests: { cpu: 100m, memory: 512Mi }
-            limits: { memory: 2Gi }
+            limits: { memory: 4Gi }
       volumes:
         - name: data
           hostPath: { path: /cluster/local/open-webui, type: DirectoryOrCreate }
