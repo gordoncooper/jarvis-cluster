@@ -43,7 +43,6 @@ data:
           ]
         }
       }
-      }
     }
 ---
 apiVersion: apps/v1
@@ -100,7 +99,7 @@ spec:
           readinessProbe:
             tcpSocket:
               port: http
-            initialDelaySeconds: 20
+            initialDelaySeconds: 15
             periodSeconds: 10
           resources:
             requests:
