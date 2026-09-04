@@ -33,8 +33,7 @@ data:
       },
       "gateway": {
         "mode": "local",
-        "bind": "lan",
-        "allowedOrigins": ["*"]
+        "bind": "lan"
       }
     }
 ---
@@ -60,6 +59,7 @@ spec:
       containers:
         - name: openclaw
           image: ghcr.io/openclaw/openclaw:2026.8.2
+          command: ["openclaw", "gateway"]
           ports:
             - name: http
               containerPort: 18789
