@@ -38,10 +38,11 @@ data:
         "controlUi": {
           "allowedOrigins": [
             "http://agent.lan",
-            "http://127.0.0.1:18789",
-            "http://localhost:18789"
+            "http://agent.lan:18789",
+            "http://192.168.8.16:18789"
           ]
         }
+      }
       }
     }
 ---
@@ -71,6 +72,7 @@ spec:
           ports:
             - name: http
               containerPort: 18789
+              hostPort: 18789
           env:
             - name: OPENAI_API_KEY
               valueFrom:
@@ -105,7 +107,7 @@ spec:
               cpu: 100m
               memory: 256Mi
             limits:
-              memory: 1Gi
+              memory: 2Gi
       volumes:
         - name: config
           configMap:
