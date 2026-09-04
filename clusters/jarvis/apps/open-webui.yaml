@@ -40,6 +40,9 @@ spec:
             - { name: WEBUI_URL, value: "https://chat.lan" }
             - { name: WHISPER_MODEL, value: base }
             - { name: AUDIO_STT_ENGINE, value: "" }
+            - { name: RAG_EMBEDDING_ENGINE, value: ollama }
+            - { name: RAG_EMBEDDING_MODEL, value: nomic-embed-text }
+            - { name: RAG_OLLAMA_BASE_URL, value: "http://ollama-embed.inference.svc.cluster.local:11434" }
           volumeMounts:
             - { name: data, mountPath: /app/backend/data }
           readinessProbe:

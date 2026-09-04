@@ -14,6 +14,12 @@ data:
           additional_drop_params: ["tools", "tool_choice", "functions"]
         model_info:
           supports_function_calling: false
+      - model_name: jarvis-embed
+        litellm_params:
+          model: ollama/nomic-embed-text
+          api_base: http://ollama-embed.inference.svc.cluster.local:11434
+        model_info:
+          mode: embedding
       - model_name: jarvis-grok
         litellm_params:
           model: xai/grok-4-fast
