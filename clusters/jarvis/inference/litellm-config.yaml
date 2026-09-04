@@ -24,12 +24,16 @@ data:
         litellm_params:
           model: xai/grok-4-fast
           api_key: os.environ/XAI_API_KEY
+          drop_params: true
+          additional_drop_params: ["max_completion_tokens"]
         rpm: 20
         tpm: 40000
       - model_name: jarvis-grok-code
         litellm_params:
           model: xai/grok-code-fast-1
           api_key: os.environ/XAI_API_KEY
+          drop_params: true
+          additional_drop_params: ["max_completion_tokens"]
         rpm: 10
         tpm: 30000
     general_settings:
