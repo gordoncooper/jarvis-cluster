@@ -34,6 +34,7 @@ data:
       "gateway": {
         "mode": "local",
         "bind": "lan",
+        "trustedProxies": ["10.42.0.0/16", "10.43.0.0/16"],
         "controlUi": {
           "allowedOrigins": [
             "http://agent.lan",
