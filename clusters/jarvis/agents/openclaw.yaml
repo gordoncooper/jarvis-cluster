@@ -62,6 +62,7 @@ spec:
       labels:
         app: openclaw
     spec:
+      serviceAccountName: openclaw
       nodeSelector:
         jarvis.role: apps
       containers:
