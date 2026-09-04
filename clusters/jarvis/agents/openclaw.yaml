@@ -1,0 +1,142 @@
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: agents
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: openclaw-config
+  namespace: agents
+data:
+  openclaw.json: |
+    {
+      "agents": {
+        "defaults": {
+          "model": { "primary": "jarvis/jarvis-grok-code" }
+        }
+      },
+      "models": {
+        "mode": "merge",
+        "providers": {
+          "jarvis": {
+            "baseUrl": "http://litellm.inference.svc.cluster.local:4000/v1",
+            "apiKey": "${LITELLM_MASTER_KEY}",
+            "api": "openai-completions",
+            "models": [
+              { "id": "jarvis-grok-code", "name": "JARVIS Grok Code" },
+              { "id": "jarvis-local", "name": "JARVIS Local 7B" }
+            ]
+          }
+        }
+      },
+      "gateway": {
+        "mode": "local",
+        "bind": "lan",
+        "allowedOrigins": ["*"]
+      }
+    }
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: openclaw
+  namespace: agents
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: openclaw
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      labels:
+        app: openclaw
+    spec:
+      nodeSelector:
+        jarvis.role: apps
+      containers:
+        - name: openclaw
+          image: ghcr.io/openclaw/openclaw:2026.8.2
+          ports:
+            - name: http
+              containerPort: 18789
+          env:
+            - name: OPENAI_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: openclaw
+                  key: LITELLM_MASTER_KEY
+            - name: LITELLM_MASTER_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: openclaw
+                  key: LITELLM_MASTER_KEY
+            - name: OPENCLAW_GATEWAY_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: openclaw
+                  key: GATEWAY_TOKEN
+            - name: OPENCLAW_GATEWAY_PORT
+              value: "18789"
+          volumeMounts:
+            - name: config
+              mountPath: /home/node/.openclaw/openclaw.json
+              subPath: openclaw.json
+            - name: data
+              mountPath: /home/node/.openclaw/workspace
+          readinessProbe:
+            tcpSocket:
+              port: http
+            initialDelaySeconds: 20
+            periodSeconds: 10
+          resources:
+            requests:
+              cpu: 100m
+              memory: 256Mi
+            limits:
+              memory: 1Gi
+      volumes:
+        - name: config
+          configMap:
+            name: openclaw-config
+        - name: data
+          hostPath:
+            path: /cluster/local/openclaw
+            type: DirectoryOrCreate
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: openclaw
+  namespace: agents
+spec:
+  selector:
+    app: openclaw
+  ports:
+    - name: http
+      port: 18789
+      targetPort: http
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: openclaw
+  namespace: agents
+  annotations:
+    traefik.ingress.kubernetes.io/router.entrypoints: web
+spec:
+  ingressClassName: traefik
+  rules:
+    - host: agent.lan
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: openclaw
+                port:
+                  number: 18789
