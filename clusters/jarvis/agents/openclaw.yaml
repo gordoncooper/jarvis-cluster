@@ -99,6 +99,8 @@ spec:
               mountPath: /home/node/.openclaw/workspace
             - name: skill-metrics
               mountPath: /home/node/.openclaw/skills/cluster-metrics
+            - name: skill-health
+              mountPath: /home/node/.openclaw/skills/cluster-health
           readinessProbe:
             tcpSocket:
               port: http
@@ -121,6 +123,9 @@ spec:
         - name: skill-metrics
           configMap:
             name: openclaw-skill-cluster-metrics
+        - name: skill-health
+          configMap:
+            name: openclaw-skill-cluster-health
 ---
 apiVersion: v1
 kind: Service
