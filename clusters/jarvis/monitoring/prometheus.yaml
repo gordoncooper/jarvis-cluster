@@ -26,6 +26,17 @@ data:
             regex: node-exporter
           - source_labels: [__meta_kubernetes_pod_node_name]
             target_label: instance
+      - job_name: nvidia-gpu-exporter
+        kubernetes_sd_configs:
+          - role: pod
+            namespaces:
+              names: [monitoring]
+        relabel_configs:
+          - source_labels: [__meta_kubernetes_pod_label_app]
+            action: keep
+            regex: nvidia-gpu-exporter
+          - source_labels: [__meta_kubernetes_pod_node_name]
+            target_label: instance
 ---
 apiVersion: apps/v1
 kind: Deployment

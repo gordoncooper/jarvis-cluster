@@ -1,0 +1,43 @@
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: nvidia-gpu-exporter
+  namespace: monitoring
+spec:
+  selector:
+    matchLabels:
+      app: nvidia-gpu-exporter
+  template:
+    metadata:
+      labels:
+        app: nvidia-gpu-exporter
+    spec:
+      runtimeClassName: nvidia
+      nodeSelector:
+        jarvis.role: gpu
+      containers:
+        - name: exporter
+          image: docker.io/utkuozdemir/nvidia_gpu_exporter:1.2.1
+          env:
+            - name: NVIDIA_VISIBLE_DEVICES
+              value: all
+            - name: NVIDIA_DRIVER_CAPABILITIES
+              value: utility
+          ports:
+            - name: metrics
+              containerPort: 9835
+          resources:
+            requests: { cpu: 10m, memory: 32Mi }
+            limits: { memory: 64Mi }
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: nvidia-gpu-exporter
+  namespace: monitoring
+  labels: { app: nvidia-gpu-exporter }
+spec:
+  clusterIP: None
+  selector: { app: nvidia-gpu-exporter }
+  ports:
+    - { name: metrics, port: 9835, targetPort: metrics }
