@@ -1,0 +1,65 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: piper
+  namespace: apps
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: piper
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      labels:
+        app: piper
+    spec:
+      nodeSelector:
+        jarvis.role: apps
+      containers:
+        - name: piper
+          image: ghcr.io/matatonic/openedai-speech-min:latest
+          args: ["--xtts_device", "none", "-H", "0.0.0.0", "-P", "8000"]
+          ports:
+            - name: http
+              containerPort: 8000
+          env:
+            - name: TTS_HOME
+              value: /app/voices
+            - name: HF_HOME
+              value: /app/voices
+          volumeMounts:
+            - name: voices
+              mountPath: /app/voices
+          readinessProbe:
+            httpGet:
+              path: /v1/models
+              port: http
+            initialDelaySeconds: 30
+            periodSeconds: 15
+          resources:
+            requests:
+              cpu: 100m
+              memory: 256Mi
+            limits:
+              memory: 1Gi
+      volumes:
+        - name: voices
+          hostPath:
+            path: /cluster/local/piper
+            type: DirectoryOrCreate
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: piper
+  namespace: apps
+spec:
+  selector:
+    app: piper
+  ports:
+    - name: http
+      port: 8000
+      targetPort: http

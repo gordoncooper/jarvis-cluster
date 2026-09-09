@@ -3,3 +3,4 @@ kind: Kustomization
 resources:
   - open-webui.yaml
   - chat-stream.yaml
+  - piper.yaml

@@ -40,6 +40,10 @@ spec:
             - { name: WEBUI_URL, value: "https://chat.lan" }
             - { name: WHISPER_MODEL, value: base }
             - { name: AUDIO_STT_ENGINE, value: "" }
+            - { name: AUDIO_TTS_ENGINE, value: "openai" }
+            - { name: AUDIO_TTS_OPENAI_API_BASE_URL, value: "http://piper.apps.svc.cluster.local:8000/v1" }
+            - { name: AUDIO_TTS_OPENAI_API_KEY, value: "sk-local" }
+            - { name: AUDIO_TTS_MODEL, value: "tts-1" }
             - { name: RAG_EMBEDDING_ENGINE, value: ollama }
             - { name: RAG_EMBEDDING_MODEL, value: nomic-embed-text }
             - { name: RAG_OLLAMA_BASE_URL, value: "http://ollama-embed.inference.svc.cluster.local:11434" }
