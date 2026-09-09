@@ -4,3 +4,4 @@ resources:
   - open-webui.yaml
   - chat-stream.yaml
   - piper.yaml
+  - homepage.yaml
