@@ -20,6 +20,12 @@ data:
     - search:
         provider: duckduckgo
         target: _blank
+    - openmeteo:
+        label: La Quinta
+        latitude: 33.663
+        longitude: -116.310
+        units: imperial
+        cache: 5
   services.yaml: |
     - JARVIS:
         - Chat:
@@ -42,6 +48,35 @@ data:
             href: http://llm.lan
             description: OpenAI-compatible proxy
             siteMonitor: http://llm.lan
+    - GPUs:
+        - gpu-01:
+            href: http://grafana.lan
+            description: Chat (qwen 7B)
+            widget:
+              type: prometheusmetric
+              url: http://prometheus.monitoring.svc.cluster.local:9090
+              refreshInterval: 10000
+              metrics:
+                - label: Temp
+                  query: nvidia_smi_temperature_gpu{instance="gpu-01"}
+                - label: VRAM
+                  query: nvidia_smi_memory_used_bytes{instance="gpu-01"}
+                  format:
+                    type: bytes
+        - gpu-02:
+            href: http://grafana.lan
+            description: Embed (nomic)
+            widget:
+              type: prometheusmetric
+              url: http://prometheus.monitoring.svc.cluster.local:9090
+              refreshInterval: 10000
+              metrics:
+                - label: Temp
+                  query: nvidia_smi_temperature_gpu{instance="gpu-02"}
+                - label: VRAM
+                  query: nvidia_smi_memory_used_bytes{instance="gpu-02"}
+                  format:
+                    type: bytes
   bookmarks.yaml: |
     - Cluster:
         - docs:
