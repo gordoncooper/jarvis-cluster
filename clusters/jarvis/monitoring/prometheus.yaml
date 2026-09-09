@@ -8,6 +8,8 @@ data:
     global:
       scrape_interval: 30s
       evaluation_interval: 30s
+    rule_files:
+      - /etc/prometheus/rules.yaml
     scrape_configs:
       - job_name: prometheus
         static_configs:
@@ -37,6 +39,32 @@ data:
             regex: nvidia-gpu-exporter
           - source_labels: [__meta_kubernetes_pod_node_name]
             target_label: instance
+  rules.yaml: |
+    groups:
+      - name: jarvis
+        rules:
+          - alert: NodeExporterDown
+            expr: up{job="node-exporter"} == 0
+            for: 2m
+            labels: { severity: critical }
+            annotations:
+              summary: "node-exporter down on {{ $labels.instance }}"
+          - alert: GpuExporterDown
+            expr: up{job="nvidia-gpu-exporter"} == 0
+            for: 2m
+            labels: { severity: critical }
+            annotations:
+              summary: "GPU exporter down on {{ $labels.instance }}"
+          - alert: GpuHot
+            expr: nvidia_smi_temperature_gpu > 80
+            for: 2m
+            labels: { severity: warning }
+            annotations:
+              summary: "GPU {{ $labels.instance }} is {{ $value }}C"
+          - alert: KubeStateMetricsDown
+            expr: up{job="kube-state-metrics"} == 0
+            for: 2m
+            labels: { severity: warning }
 ---
 apiVersion: apps/v1
 kind: Deployment
