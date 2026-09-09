@@ -47,7 +47,7 @@ data:
         - LiteLLM:
             href: http://llm.lan
             description: OpenAI-compatible proxy
-            siteMonitor: http://llm.lan
+            siteMonitor: http://litellm.inference.svc.cluster.local:4000/health/liveliness
     - GPUs:
         - gpu-01:
             href: http://grafana.lan
