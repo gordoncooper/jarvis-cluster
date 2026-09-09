@@ -18,6 +18,8 @@ spec:
       containers:
         - name: exporter
           image: docker.io/utkuozdemir/nvidia_gpu_exporter:1.2.1
+          args:
+            - --query-field-names=uuid,name,driver_version,pstate,temperature.gpu,utilization.gpu,utilization.memory,memory.used,memory.total,fan.speed,power.draw,clocks.current.graphics,clocks.current.memory
           env:
             - name: NVIDIA_VISIBLE_DEVICES
               value: all
