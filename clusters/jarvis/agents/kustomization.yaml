@@ -3,3 +3,4 @@ kind: Kustomization
 resources:
   - openclaw.yaml
   - rbac.yaml
+  - cluster-metrics-skill.yaml

@@ -1,0 +1,35 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: openclaw-skill-cluster-metrics
+  namespace: agents
+data:
+  SKILL.md: |
+    ---
+    name: cluster-metrics
+    description: Query JARVIS Prometheus for live GPU and node metrics. Never invent values.
+    ---
+    Prometheus (no auth): http://prometheus.monitoring.svc.cluster.local:9090
+    Helper (curl is not in this image):
+      node /home/node/.openclaw/skills/cluster-metrics/prom.js QUERY
+    Queries:
+      nvidia_smi_temperature_gpu
+      nvidia_smi_memory_used_bytes
+      nvidia_smi_gpu_info
+      up
+    instance label is the k3s node name (gpu-01, gpu-02, ...).
+    If the helper prints (no series), say so. Do not guess. Do not call any other URL.
+  prom.js: |
+    const query = process.argv[2];
+    if (!query) { console.error("usage: node prom.js QUERY"); process.exit(2); }
+    const url = "http://prometheus.monitoring.svc.cluster.local:9090/api/v1/query?query=" + encodeURIComponent(query);
+    fetch(url).then(r => r.json()).then(j => {
+      if (j.status !== "success") { console.error(JSON.stringify(j)); process.exit(1); }
+      const rows = j.data.result || [];
+      if (!rows.length) { console.log("(no series)"); return; }
+      for (const row of rows) {
+        const name = row.metric.__name__ || query;
+        const labels = Object.entries(row.metric).filter(([k]) => k !== "__name__").map(([k,v]) => k + "=" + v).join(",");
+        console.log(name + "{" + labels + "} " + row.value[1]);
+      }
+    }).catch(e => { console.error(String(e)); process.exit(1); });

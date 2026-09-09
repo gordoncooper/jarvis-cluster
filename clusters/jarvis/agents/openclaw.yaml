@@ -97,6 +97,8 @@ spec:
               subPath: openclaw.json
             - name: data
               mountPath: /home/node/.openclaw/workspace
+            - name: skill-metrics
+              mountPath: /home/node/.openclaw/skills/cluster-metrics
           readinessProbe:
             tcpSocket:
               port: http
@@ -116,6 +118,9 @@ spec:
           hostPath:
             path: /cluster/local/openclaw
             type: DirectoryOrCreate
+        - name: skill-metrics
+          configMap:
+            name: openclaw-skill-cluster-metrics
 ---
 apiVersion: v1
 kind: Service
