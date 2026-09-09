@@ -47,10 +47,6 @@ data:
         - docs:
             - abbr: LS
               href: https://chat.lan
-  docker.yaml: |
-    {}
-  kubernetes.yaml: |
-    {}
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -76,13 +72,25 @@ spec:
           image: ghcr.io/gethomepage/homepage:v1.1.1
           env:
             - name: HOMEPAGE_ALLOWED_HOSTS
-              value: home.lan,homepage.apps.svc.cluster.local,localhost
+              value: "*"
           ports:
             - name: http
               containerPort: 3000
           volumeMounts:
-            - name: config
-              mountPath: /app/config
+            - name: cfg
+              mountPath: /app/config/settings.yaml
+              subPath: settings.yaml
+            - name: cfg
+              mountPath: /app/config/widgets.yaml
+              subPath: widgets.yaml
+            - name: cfg
+              mountPath: /app/config/services.yaml
+              subPath: services.yaml
+            - name: cfg
+              mountPath: /app/config/bookmarks.yaml
+              subPath: bookmarks.yaml
+            - name: logs
+              mountPath: /app/config/logs
           resources:
             requests:
               cpu: 25m
@@ -90,9 +98,11 @@ spec:
             limits:
               memory: 256Mi
       volumes:
-        - name: config
+        - name: cfg
           configMap:
             name: homepage
+        - name: logs
+          emptyDir: {}
 ---
 apiVersion: v1
 kind: Service
