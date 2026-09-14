@@ -32,6 +32,9 @@ spec:
             - name: WEBUI_SECRET_KEY
               valueFrom: { secretKeyRef: { name: open-webui, key: WEBUI_SECRET_KEY } }
             - { name: DEFAULT_MODELS, value: jarvis-local }
+            - name: DEFAULT_SYSTEM_PROMPT
+              valueFrom:
+                configMapKeyRef: { name: jarvis-persona, key: system.txt }
             - { name: ENABLE_SIGNUP, value: "true" }
             - { name: WEBUI_AUTH, value: "true" }
             - { name: ENABLE_NATIVE_FUNCTION_CALLING, value: "true" }

@@ -8,3 +8,12 @@ resources:
   - prometheus.yaml
   - grafana.yaml
   - gpu-exporter.yaml
+  - grafana-dashboard-provider.yaml
+configMapGenerator:
+  - name: grafana-dashboards
+    namespace: monitoring
+    files:
+      - dashboards/Node_Exporter_Full.json
+      - dashboards/Nvidia_GPU_Metrics.json
+    options:
+      disableNameSuffixHash: true

@@ -5,3 +5,4 @@ resources:
   - chat-stream.yaml
   - piper.yaml
   - homepage.yaml
+  - jarvis-persona.yaml
