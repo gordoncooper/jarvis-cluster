@@ -1,12 +1,13 @@
 # How to talk to JARVIS
 
-| Surface | URL / cmd | Best for |
-|---|---|---|
-| Command board | https://home.lan | Home. Header **LIVE** = Prometheus; **SIM** = fallback |
-| Status floor | https://home.lan/status | GPU / node / workloads |
-| Chat | https://chat.lan | `jarvis-local` or `jarvis-grok*` |
-| Agent | http://agent.lan:18789 | OpenClaw |
-| Grafana | https://grafana.lan | Graphs |
-| GitOps | http://git.lan | YAML in `~/cluster` |
+- **https://home.lan** — command board. Header LIVE = Prometheus, SIM = fallback.
+- **https://home.lan/status** — GPU temp/VRAM, node CPU/RAM, workloads.
+- **https://chat.lan** — Open WebUI. jarvis-local (free) or jarvis-grok* (SuperGrok).
+- **http://agent.lan:18789** — OpenClaw. DNS must be 192.168.8.16. HTTP on purpose.
+- **goose session** on bastion — terminal agent; OPENAI_HOST=https://llm.lan
+- **https://grafana.lan** — graphs, NVIDIA 14574.
+- **https://llm.lan/v1** — LiteLLM, OpenAI-shaped.
+- **http://git.lan** — Gitea, Flux origin, stays HTTP.
+- **ssh bastion** — break-glass.
 
-git.lan stays HTTP. agent.lan:18789 is HTTP on purpose.
+Pick jarvis-local for chatter and RAG. Pick jarvis-grok-code when it must run tools or write YAML.
