@@ -11,7 +11,7 @@ data:
     ---
     Never curl, wget, or scrape HTML to discover URLs. This file is the map.
 
-    | Gordon opens | URL | For |
+    | the operator opens | URL | For |
     |---|---|---|
     | Chat / voice / RAG | https://chat.lan | jarvis-local (cheap) or jarvis-grok-code |
     | This agent | http://agent.lan:18789 | Cluster ops, live k8s/metrics |

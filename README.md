@@ -2,7 +2,7 @@
 
 Flux source of truth for the running home lab. **Authoritative copy is Gitea**
 `http://git.lan/jarvis/cluster.git`. This GitHub repo is a **mirror only** —
-do not open PRs here and expect Flux to see them.
+the admin should not open PRs here and expect Flux to see them.
 
 Metal / OS / Ansible / rebuild: [gordoncooper/jarvis-infra](https://github.com/gordoncooper/jarvis-infra).
 
@@ -10,13 +10,13 @@ Metal / OS / Ansible / rebuild: [gordoncooper/jarvis-infra](https://github.com/g
 
 ```mermaid
 flowchart LR
-  You["Gordon"] -->|"git push"| Gitea["Gitea git.lan"]
+  You["operator"] -->|"git push"| Gitea["Gitea git.lan"]
   Gitea -->|"Flux reconcile"| K3s["k3s"]
   Gitea -->|"nightly mirror"| GH["GitHub jarvis-cluster"]
   Infra["GitHub jarvis-infra"] -->|"Ansible SSH"| Nodes["six M920x + bastion"]
 ```
 
-Push app YAML to **Gitea**. Push bootstrap/docs to **jarvis-infra**.
+The admin pushes app YAML to **Gitea** and bootstrap/docs to **jarvis-infra**.
 
 ## Cluster layout
 
@@ -25,7 +25,7 @@ single-server etcd on ctrl-01. Traefik Ingress. mkcert LAN TLS.
 
 ```mermaid
 flowchart TB
-  subgraph users["How Gordon talks to it"]
+  subgraph users["How the operator talks to it"]
     Browser["Browser on LAN"]
     Goose["Goose on bastion"]
   end
