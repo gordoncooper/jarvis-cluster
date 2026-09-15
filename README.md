@@ -8,7 +8,7 @@ Metal, Ansible, and the homepage **image** live in
 
 **Canonical pins:** `jarvis-infra/VERSION` on the bastion
 (`~/jarvis-infra/VERSION`). Do not copy git/image tags into this file as
-source of truth. Read **jarvis-infra** `docs/OPERATING.md` (then LESSONS) before changing YAML.
+source of truth. New AI / copilot: read jarvis-infra **`docs/COPILOT.md`** first, then `docs/OPERATING.md` (then LESSONS) before changing YAML.
 
 | Item | Value |
 | --- | --- |
