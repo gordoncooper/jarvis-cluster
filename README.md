@@ -3,67 +3,122 @@
 Flux YAML for a six-node k3s inference lab. **Gitea is origin.** This GitHub
 repo is a **mirror**. Do not point Flux at GitHub.
 
-Metal and the homepage image live in
+Metal, Ansible, and the homepage **image** live in
 [gordoncooper/jarvis-infra](https://github.com/gordoncooper/jarvis-infra).
 
 Read [docs/LESSONS.md](docs/LESSONS.md) before changing anything.
 
-- Known-good git tag: **v0.4.7**. Image **jarvis-home:v0.4.5**.
-- Flux origin: http://git.lan/jarvis/cluster.git
-- k3s: v1.36.4+k3s1, single-server etcd on ctrl-01
+| Item | Value |
+| --- | --- |
+| Known-good git tag | **v0.4.9** (these READMEs) |
+| Homepage image | **jarvis-home:v0.4.8** |
+| Flux origin | http://git.lan/jarvis/cluster.git |
+| k3s | v1.36.4+k3s1, single-server etcd on ctrl-01 |
 
 ## Use cases
 
-- **Local chat** — Open WebUI to LiteLLM to Ollama 7B Q6 on gpu-01.
-- **Grok on demand** — jarvis-grok / jarvis-grok-code via xAI.
-- **RAG** — nomic-embed-text on gpu-02.
-- **Voice** — Whisper STT on chat.lan; Piper on apps-01.
-- **Hands on the cluster** — OpenClaw at http://agent.lan:18789.
-- **See the rack** — https://home.lan and https://grafana.lan.
-- **GitOps** — edit YAML in ~/cluster as agent, push Gitea, Flux reconciles.
+- **Local chat** — Open WebUI to LiteLLM to Ollama 7B Q6 on gpu-01 (electricity only).
+- **Grok on demand** — same OpenAI-shaped API, models jarvis-grok / jarvis-grok-code via xAI.
+- **RAG** — embeddings on gpu-02 (nomic-embed-text), knowledge in Open WebUI.
+- **Voice** — Whisper STT on chat.lan (HTTPS); Piper TTS on apps-01.
+- **Hands on the cluster** — OpenClaw at http://agent.lan:18789 (hostPort on apps-01).
+- **See the rack** — https://home.lan and https://grafana.lan (14574).
+- **GitOps** — edit YAML in cluster as user agent, push Gitea, Flux reconciles.
 
 ## GitOps path
 
 ```mermaid
+sequenceDiagram
+  actor Dev as agent on bastion
+  participant Gitea as Gitea git.lan
+  participant Flux as Flux on ctrl-01
+  participant Nodes as apps / gpu / data
+  participant GH as GitHub mirror
+  Dev->>Gitea: git push main
+  Gitea->>Flux: GitRepository reconcile
+  Flux->>Nodes: apply clusters/jarvis YAML
+  Dev->>Gitea: mirror-to-github.sh
+  Gitea->>GH: git push --mirror
+```
+
+```mermaid
 flowchart LR
-  dev["agent on bastion"] -->|"git push"| gitea["Gitea git.lan"]
-  gitea -->|"Flux reconcile"| ctrl["ctrl-01"]
-  ctrl --> workers["apps gpu and data nodes"]
-  gitea -->|"mirror script"| gh["GitHub mirror"]
+  classDef src fill:#d1fae5,stroke:#047857,color:#111827
+  classDef ctrl fill:#e0e7ff,stroke:#3730a3,color:#111827
+  classDef mir fill:#f3f4f6,stroke:#6b7280,color:#111827
+  Dev["agent on bastion"] -->|"git push"| Gitea["Gitea git.lan"]
+  Gitea -->|"Flux reconcile"| Ctrl["ctrl-01"]
+  Ctrl --> Workers["apps-01, gpu-01, gpu-02, data nodes"]
+  Gitea -->|"mirror script"| GH["GitHub mirror"]
+  class Gitea src
+  class Ctrl ctrl
+  class GH mir
+```
+
+## Inference and telemetry data path
+
+```mermaid
+sequenceDiagram
+  actor You
+  participant Chat as chat.lan Open WebUI
+  participant LLM as LiteLLM apps-01
+  participant Local as Ollama gpu-01
+  participant Embed as Ollama gpu-02
+  participant Home as home.lan
+  participant Prom as Prometheus data-02
+  You->>Chat: prompt
+  Chat->>LLM: OpenAI-shaped /v1
+  alt jarvis-local
+    LLM->>Local: generate
+  else jarvis-grok / grok-code
+    LLM->>LLM: xAI upstream
+  else RAG
+    LLM->>Embed: nomic-embed-text
+  end
+  You->>Home: tiles / events
+  Home->>Prom: in-cluster :9090
+  Prom-->>Home: GPU temp, node, Flux
 ```
 
 ## Workloads by node
 
+Bastion (192.168.8.10) is omitted — it is not a k3s node.
+
 ```mermaid
 flowchart TB
-  subgraph nctrl["ctrl-01 192.168.8.11"]
-    k3s["k3s server plus etcd"]
+  classDef ctrl fill:#e0e7ff,stroke:#3730a3,color:#111827
+  classDef gpu fill:#d1fae5,stroke:#047857,color:#111827
+  classDef store fill:#fef3c7,stroke:#b45309,color:#111827
+  classDef apps fill:#fce7f3,stroke:#9d174d,color:#111827
+
+  subgraph nctrl["ctrl-01  192.168.8.11"]
+    k3s["k3s server + etcd"]
     giteaN["Gitea"]
     flux["Flux"]
-    traefik["Traefik TLSStore"]
+    traefik["Traefik / TLSStore"]
   end
-  subgraph ngpu1["gpu-01 192.168.8.12"]
+  subgraph ngpu1["gpu-01  192.168.8.12"]
     ollama["Ollama jarvis-local"]
     gex1["nvidia-gpu-exporter"]
   end
-  subgraph ngpu2["gpu-02 192.168.8.13"]
+  subgraph ngpu2["gpu-02  192.168.8.13"]
     embed["Ollama nomic-embed"]
     gex2["nvidia-gpu-exporter"]
   end
-  subgraph ndata1["data-01 192.168.8.14"]
-    nfs["NFS cluster share"]
+  subgraph ndata1["data-01  192.168.8.14"]
+    nfs["NFS /cluster"]
   end
-  subgraph ndata2["data-02 192.168.8.15"]
+  subgraph ndata2["data-02  192.168.8.15"]
     prom["Prometheus"]
     graf["Grafana"]
     ksm["kube-state-metrics"]
   end
-  subgraph napps["apps-01 192.168.8.16"]
+  subgraph napps["apps-01  192.168.8.16"]
     webui["Open WebUI"]
     litellm["LiteLLM"]
     piper["Piper"]
-    claw["OpenClaw port 18789"]
-    home["jarvis-home port 3000"]
+    claw["OpenClaw :18789"]
+    home["jarvis-home :3000"]
   end
   webui --> litellm
   claw --> litellm
@@ -71,29 +126,46 @@ flowchart TB
   litellm --> embed
   home --> prom
   graf --> prom
+
+  class nctrl,k3s,giteaN,flux,traefik ctrl
+  class ngpu1,ngpu2,ollama,embed,gex1,gex2 gpu
+  class ndata1,ndata2,nfs,prom,graf,ksm store
+  class napps,webui,litellm,piper,claw,home apps
 ```
 
-Bastion 192.168.8.10 is not a k3s node.
+## Namespaces (this tree)
 
-## Namespaces
+| Path | Namespace | What |
+| --- | --- | --- |
+| k8s/gitea/ | gitea | git.lan |
+| k8s/inference/ | inference | Ollama, embed, LiteLLM, RuntimeClass |
+| k8s/apps/ | apps | Open WebUI, Piper, homepage (jarvis-home:v0.4.8) |
+| k8s/agents/ | agents | OpenClaw + RBAC + skills |
+| k8s/monitoring/ | monitoring | Prometheus, Grafana, exporters |
+| k8s/tls/ | traefik | mkcert TLSStore for LAN names |
 
-- k8s/gitea — git.lan
-- k8s/inference — Ollama, embed, LiteLLM
-- k8s/apps — Open WebUI, Piper, homepage jarvis-home:v0.4.5
-- k8s/agents — OpenClaw
-- k8s/monitoring — Prometheus, Grafana, exporters
-- k8s/tls — mkcert TLSStore
-
-Build the homepage image on apps-01 before Flux applies homepage.yaml.
+Homepage contract: image is built on apps-01 from jarvis-infra
+(install-jarvis-home.sh) before Flux applies homepage.yaml.
+imagePullPolicy: Never. SA homepage lists Events + Flux CRs.
 
 ## URLs
 
-- https://home.lan
-- https://chat.lan
-- http://agent.lan:18789
-- https://llm.lan/v1
-- http://git.lan
-- https://grafana.lan
+| URL | App |
+| --- | --- |
+| https://home.lan | Command center (Home + /status + /api/telemetry) |
+| https://chat.lan | Open WebUI |
+| http://agent.lan:18789 | OpenClaw (not :80, not ctrl-01) |
+| https://llm.lan/v1 | LiteLLM |
+| http://git.lan | Gitea |
+| https://grafana.lan | Grafana |
 
-Tags: v0.4.4 command center, v0.4.5 Prometheus tiles, v0.4.6 first README,
-**v0.4.7** mermaid GitHub can render.
+## History
+
+| Tag | What |
+| --- | --- |
+| v0.4.4 | command center live |
+| v0.4.5 | Prometheus scrape, LIVE tiles |
+| v0.4.6 | first architecture README pass |
+| v0.4.7 | mermaid GitHub can parse |
+| v0.4.8 | 10-min event stream + events RBAC |
+| **v0.4.9** | richer READMEs + colored diagrams |
