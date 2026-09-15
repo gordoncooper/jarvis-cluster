@@ -20,7 +20,8 @@ spec:
         jarvis.role: apps
       containers:
         - name: piper
-          image: ghcr.io/matatonic/openedai-speech-min:latest
+          image: ghcr.io/matatonic/openedai-speech-min:latest@sha256:e82d719252fb1b861967f4f9abb8513f028ab9c1139451245688dbf34992b060
+          imagePullPolicy: IfNotPresent
           ports:
             - name: http
               containerPort: 8000
