@@ -165,18 +165,15 @@ Live path on the bastion clone is `clusters/jarvis/apps/homepage.yaml`
 | http://git.lan | Gitea |
 | https://grafana.lan | Grafana |
 
-## History
+## Docs and scripts
 
-PHASE1-22 markdown in this repo are **snapshots**. Do not rewrite them
-when `VERSION` moves.
+Canonical operator docs live in **jarvis-infra**:
+[OPERATING](https://github.com/gordoncooper/jarvis-infra/blob/main/docs/OPERATING.md),
+[INTERACT](https://github.com/gordoncooper/jarvis-infra/blob/main/docs/INTERACT.md),
+[REBUILD](https://github.com/gordoncooper/jarvis-infra/blob/main/docs/REBUILD.md),
+[RESTORE](https://github.com/gordoncooper/jarvis-infra/blob/main/docs/RESTORE.md),
+[LESSONS](https://github.com/gordoncooper/jarvis-infra/blob/main/docs/LESSONS.md).
+`docs/history/` there is frozen (PHASE snapshots). Do not rewrite them.
 
-| Tag | What |
-| --- | --- |
-| v0.4.4 | command center live |
-| v0.4.5 | Prometheus scrape, LIVE tiles |
-| v0.4.6 | first architecture README pass |
-| v0.4.7 | mermaid GitHub can parse |
-| v0.4.8 | 10-min event stream + events RBAC |
-| v0.4.9 | richer READMEs + colored diagrams |
-| v0.4.10 | VERSION contract; rebuild docs stop copying tags |
-| **v0.4.11** | restore full READMEs (do not shorten for chat) |
+Scripts (`check-contract.sh`, `verify-jarvis.sh`, backup, reboot, smoke)
+live in `~/jarvis-infra/scripts/`. This repo is Flux YAML only.
