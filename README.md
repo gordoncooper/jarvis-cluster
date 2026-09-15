@@ -23,7 +23,7 @@ source of truth. New AI / copilot: read jarvis-infra **`docs/COPILOT.md`** first
 - **RAG** — embeddings on gpu-02 (nomic-embed-text), knowledge in Open WebUI.
 - **Voice** — Whisper STT on chat.lan (HTTPS); Piper TTS on apps-01.
 - **Hands on the cluster** — OpenClaw at http://agent.lan:18789 (hostPort on apps-01).
-- **See the rack** — https://home.lan and https://grafana.lan (14574).
+- **See the rack** — https://home.lan (click tiles for host/GPU/service dossiers + pods) and https://grafana.lan (14574).
 - **GitOps** — edit YAML in cluster as user agent, push Gitea, Flux reconciles.
 
 ## GitOps path
