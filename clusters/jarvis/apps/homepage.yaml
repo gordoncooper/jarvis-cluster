@@ -1,88 +1,3 @@
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: homepage
-  namespace: apps
-data:
-  settings.yaml: |
-    title: JARVIS
-    headerStyle: clean
-    statusStyle: dot
-    theme: dark
-    color: slate
-    hideVersion: true
-  widgets.yaml: |
-    - datetime:
-        text_size: xl
-        format:
-          dateStyle: medium
-          timeStyle: short
-    - search:
-        provider: duckduckgo
-        target: _blank
-    - openmeteo:
-        label: La Quinta
-        latitude: 33.663
-        longitude: -116.310
-        units: imperial
-        cache: 5
-  services.yaml: |
-    - JARVIS:
-        - Chat:
-            href: https://chat.lan
-            description: Open WebUI (Whisper + Piper)
-            siteMonitor: https://chat.lan
-        - Agent:
-            href: http://agent.lan:18789
-            description: OpenClaw (port 18789, not 80)
-            siteMonitor: http://192.168.8.16:18789
-        - Grafana:
-            href: http://grafana.lan
-            description: Prometheus + GPU
-            siteMonitor: http://grafana.lan
-        - Gitea:
-            href: http://git.lan
-            description: GitOps
-            siteMonitor: http://git.lan
-        - LiteLLM:
-            href: http://llm.lan
-            description: OpenAI-compatible proxy
-            siteMonitor: http://litellm.inference.svc.cluster.local:4000/health/liveliness
-    - GPUs:
-        - gpu-01:
-            href: http://grafana.lan
-            description: Chat (qwen 7B)
-            widget:
-              type: prometheusmetric
-              url: http://prometheus.monitoring.svc.cluster.local:9090
-              refreshInterval: 10000
-              metrics:
-                - label: Temp
-                  query: nvidia_smi_temperature_gpu{instance="gpu-01"}
-                - label: VRAM
-                  query: nvidia_smi_memory_used_bytes{instance="gpu-01"}
-                  format:
-                    type: bytes
-        - gpu-02:
-            href: http://grafana.lan
-            description: Embed (nomic)
-            widget:
-              type: prometheusmetric
-              url: http://prometheus.monitoring.svc.cluster.local:9090
-              refreshInterval: 10000
-              metrics:
-                - label: Temp
-                  query: nvidia_smi_temperature_gpu{instance="gpu-02"}
-                - label: VRAM
-                  query: nvidia_smi_memory_used_bytes{instance="gpu-02"}
-                  format:
-                    type: bytes
-  bookmarks.yaml: |
-    - Cluster:
-        - docs:
-            - abbr: LS
-              href: https://chat.lan
----
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -91,53 +6,27 @@ metadata:
 spec:
   replicas: 1
   selector:
-    matchLabels:
-      app: homepage
-  strategy:
-    type: Recreate
+    matchLabels: { app: homepage }
+  strategy: { type: Recreate }
   template:
     metadata:
-      labels:
-        app: homepage
+      labels: { app: homepage }
     spec:
       nodeSelector:
         jarvis.role: apps
       containers:
         - name: homepage
-          image: ghcr.io/gethomepage/homepage:v1.1.1
-          env:
-            - name: HOMEPAGE_ALLOWED_HOSTS
-              value: "*"
+          image: docker.io/library/jarvis-home:v0.1
+          imagePullPolicy: Never
           ports:
-            - name: http
-              containerPort: 3000
-          volumeMounts:
-            - name: cfg
-              mountPath: /app/config/settings.yaml
-              subPath: settings.yaml
-            - name: cfg
-              mountPath: /app/config/widgets.yaml
-              subPath: widgets.yaml
-            - name: cfg
-              mountPath: /app/config/services.yaml
-              subPath: services.yaml
-            - name: cfg
-              mountPath: /app/config/bookmarks.yaml
-              subPath: bookmarks.yaml
-            - name: logs
-              mountPath: /app/config/logs
+            - { name: http, containerPort: 3000 }
+          readinessProbe:
+            httpGet: { path: /, port: http }
+            initialDelaySeconds: 3
+            periodSeconds: 10
           resources:
-            requests:
-              cpu: 25m
-              memory: 64Mi
-            limits:
-              memory: 256Mi
-      volumes:
-        - name: cfg
-          configMap:
-            name: homepage
-        - name: logs
-          emptyDir: {}
+            requests: { cpu: 50m, memory: 128Mi }
+            limits: { memory: 512Mi }
 ---
 apiVersion: v1
 kind: Service
@@ -145,12 +34,9 @@ metadata:
   name: homepage
   namespace: apps
 spec:
-  selector:
-    app: homepage
+  selector: { app: homepage }
   ports:
-    - name: http
-      port: 3000
-      targetPort: http
+    - { name: http, port: 3000, targetPort: http }
 ---
 apiVersion: networking.k8s.io/v1
 kind: Ingress
@@ -171,7 +57,4 @@ spec:
           - path: /
             pathType: Prefix
             backend:
-              service:
-                name: homepage
-                port:
-                  number: 3000
+              service: { name: homepage, port: { number: 3000 } }
