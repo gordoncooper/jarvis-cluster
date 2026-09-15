@@ -1,45 +1,15 @@
 # JARVIS home cluster
 
-Flux YAML for a six-node k3s inference lab. **Gitea is origin.** This GitHub
-repo is a **mirror**. Do not point Flux at GitHub.
+Flux YAML. Gitea is origin. This GitHub repo is a mirror. Do not point Flux at GitHub.
 
-Metal, Ansible, and the homepage **image** live in
-[gordoncooper/jarvis-infra](https://github.com/gordoncooper/jarvis-infra).
-
-Read [docs/LESSONS.md](docs/LESSONS.md) before changing anything.
+Canonical pins: ~/jarvis-infra/VERSION
 
 | Item | Value |
 | --- | --- |
-| Known-good git tag | **v0.4.9** (these READMEs) |
-| Homepage image | **jarvis-home:v0.4.8** |
+| Pins | ~/jarvis-infra/VERSION |
 | Flux origin | http://git.lan/jarvis/cluster.git |
-| k3s | v1.36.4+k3s1, single-server etcd on ctrl-01 |
-
-## Use cases
-
-- **Local chat** — Open WebUI to LiteLLM to Ollama 7B Q6 on gpu-01 (electricity only).
-- **Grok on demand** — same OpenAI-shaped API, models jarvis-grok / jarvis-grok-code via xAI.
-- **RAG** — embeddings on gpu-02 (nomic-embed-text), knowledge in Open WebUI.
-- **Voice** — Whisper STT on chat.lan (HTTPS); Piper TTS on apps-01.
-- **Hands on the cluster** — OpenClaw at http://agent.lan:18789 (hostPort on apps-01).
-- **See the rack** — https://home.lan and https://grafana.lan (14574).
-- **GitOps** — edit YAML in cluster as user agent, push Gitea, Flux reconciles.
 
 ## GitOps path
-
-```mermaid
-sequenceDiagram
-  actor Dev as agent on bastion
-  participant Gitea as Gitea git.lan
-  participant Flux as Flux on ctrl-01
-  participant Nodes as apps / gpu / data
-  participant GH as GitHub mirror
-  Dev->>Gitea: git push main
-  Gitea->>Flux: GitRepository reconcile
-  Flux->>Nodes: apply clusters/jarvis YAML
-  Dev->>Gitea: mirror-to-github.sh
-  Gitea->>GH: git push --mirror
-```
 
 ```mermaid
 flowchart LR
@@ -55,34 +25,7 @@ flowchart LR
   class GH mir
 ```
 
-## Inference and telemetry data path
-
-```mermaid
-sequenceDiagram
-  actor You
-  participant Chat as chat.lan Open WebUI
-  participant LLM as LiteLLM apps-01
-  participant Local as Ollama gpu-01
-  participant Embed as Ollama gpu-02
-  participant Home as home.lan
-  participant Prom as Prometheus data-02
-  You->>Chat: prompt
-  Chat->>LLM: OpenAI-shaped /v1
-  alt jarvis-local
-    LLM->>Local: generate
-  else jarvis-grok / grok-code
-    LLM->>LLM: xAI upstream
-  else RAG
-    LLM->>Embed: nomic-embed-text
-  end
-  You->>Home: tiles / events
-  Home->>Prom: in-cluster :9090
-  Prom-->>Home: GPU temp, node, Flux
-```
-
 ## Workloads by node
-
-Bastion (192.168.8.10) is omitted — it is not a k3s node.
 
 ```mermaid
 flowchart TB
@@ -90,7 +33,6 @@ flowchart TB
   classDef gpu fill:#d1fae5,stroke:#047857,color:#111827
   classDef store fill:#fef3c7,stroke:#b45309,color:#111827
   classDef apps fill:#fce7f3,stroke:#9d174d,color:#111827
-
   subgraph nctrl["ctrl-01  192.168.8.11"]
     k3s["k3s server + etcd"]
     giteaN["Gitea"]
@@ -126,46 +68,17 @@ flowchart TB
   litellm --> embed
   home --> prom
   graf --> prom
-
   class nctrl,k3s,giteaN,flux,traefik ctrl
   class ngpu1,ngpu2,ollama,embed,gex1,gex2 gpu
   class ndata1,ndata2,nfs,prom,graf,ksm store
   class napps,webui,litellm,piper,claw,home apps
 ```
 
-## Namespaces (this tree)
-
-| Path | Namespace | What |
-| --- | --- | --- |
-| k8s/gitea/ | gitea | git.lan |
-| k8s/inference/ | inference | Ollama, embed, LiteLLM, RuntimeClass |
-| k8s/apps/ | apps | Open WebUI, Piper, homepage (jarvis-home:v0.4.8) |
-| k8s/agents/ | agents | OpenClaw + RBAC + skills |
-| k8s/monitoring/ | monitoring | Prometheus, Grafana, exporters |
-| k8s/tls/ | traefik | mkcert TLSStore for LAN names |
-
-Homepage contract: image is built on apps-01 from jarvis-infra
-(install-jarvis-home.sh) before Flux applies homepage.yaml.
-imagePullPolicy: Never. SA homepage lists Events + Flux CRs.
-
-## URLs
-
-| URL | App |
-| --- | --- |
-| https://home.lan | Command center (Home + /status + /api/telemetry) |
-| https://chat.lan | Open WebUI |
-| http://agent.lan:18789 | OpenClaw (not :80, not ctrl-01) |
-| https://llm.lan/v1 | LiteLLM |
-| http://git.lan | Gitea |
-| https://grafana.lan | Grafana |
-
-## History
+Live Flux path: clusters/jarvis/apps/homepage.yaml
+imagePullPolicy Never. SA homepage. Image from infra VERSION.
 
 | Tag | What |
 | --- | --- |
-| v0.4.4 | command center live |
-| v0.4.5 | Prometheus scrape, LIVE tiles |
-| v0.4.6 | first architecture README pass |
-| v0.4.7 | mermaid GitHub can parse |
-| v0.4.8 | 10-min event stream + events RBAC |
-| **v0.4.9** | richer READMEs + colored diagrams |
+| v0.4.8 | event stream |
+| v0.4.9 | colored README diagrams |
+| v0.4.10 | VERSION contract |
