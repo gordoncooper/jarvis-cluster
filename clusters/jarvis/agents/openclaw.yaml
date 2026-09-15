@@ -71,7 +71,8 @@ spec:
         jarvis.role: apps
       containers:
         - name: openclaw
-          image: ghcr.io/openclaw/openclaw:2026.8.2
+          image: ghcr.io/openclaw/openclaw:2026.8.2@sha256:5d25165995041caa6a7175bec82b25ad98c44eb269bb42435da8e27ec06e6be4
+          imagePullPolicy: IfNotPresent
           command: ["openclaw", "gateway"]
           ports:
             - name: http
