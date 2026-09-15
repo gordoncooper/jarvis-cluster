@@ -10,7 +10,7 @@ metadata:
   name: homepage-events
 rules:
   - apiGroups: [""]
-    resources: [events]
+    resources: [events, pods, nodes]
     verbs: [get, list]
   - apiGroups: [kustomize.toolkit.fluxcd.io]
     resources: [kustomizations]
@@ -51,7 +51,7 @@ spec:
         jarvis.role: apps
       containers:
         - name: homepage
-          image: docker.io/library/jarvis-home:v0.4.8
+          image: docker.io/library/jarvis-home:v0.4.9
           imagePullPolicy: Never
           env:
             - name: PROMETHEUS_URL
@@ -59,8 +59,8 @@ spec:
           ports:
             - { name: http, containerPort: 3000 }
           readinessProbe:
-            httpGet: { path: /, port: http }
-            initialDelaySeconds: 5
+            httpGet: { path: /health, port: http }
+            initialDelaySeconds: 3
             periodSeconds: 5
             timeoutSeconds: 3
             failureThreshold: 12
