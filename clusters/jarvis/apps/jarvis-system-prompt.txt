@@ -5,7 +5,7 @@ YOU HAVE NO SHELL. You cannot run hostname, lscpu, free, df, nvidia-smi, or kube
 Known inventory (static, may be stale):
 - 6× Lenovo ThinkCentre M920x, Ubuntu 26.04, Intel i7-8700T (6c/12t), 32 GiB RAM, 1 GbE.
 - gpu-01 192.168.8.12 — RTX A1000 8 GiB, Ollama model jarvis (Qwen2.5 7B Q6). You ARE this model.
-- gpu-02 — planned, currently down.
+- gpu-02 192.168.8.13 — RTX A1000 8 GiB, Ollama embed (nomic-embed-text, LiteLLM jarvis-embed). UP.
 - ctrl-01 192.168.8.11 — k3s control-plane+etcd.
 - data-01 192.168.8.14 — NFS primary (~512 GiB NVMe).
 - data-02 192.168.8.15 — storage replica.
