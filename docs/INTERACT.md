@@ -1,10 +1,18 @@
 # How to talk to JARVIS
 
-Canonical copy: jarvis-infra/docs/INTERACT.md.
+Canonical copy: `jarvis-infra/docs/INTERACT.md`.
 
-https://home.lan — command center
-https://home.lan/status — GPUs + event stream
-http://agent.lan:18789 — OpenClaw (DNS 192.168.8.16)
-http://git.lan — Gitea origin
+| Surface | URL / cmd | Best for | Model / cost |
+| --- | --- | --- | --- |
+| Command board | https://home.lan | Services + rack + compact events. Header **LIVE** = Prometheus. | — |
+| Status floor | https://home.lan/status | GPU temp/VRAM, 10-min event stream, nodes | — |
+| Telemetry | https://home.lan/api/telemetry | JSON snapshot | — |
+| Chat | https://chat.lan | Q&A, RAG, voice | `jarvis-local` free; `jarvis-grok*` SuperGrok |
+| Agent | http://agent.lan:18789 | Cluster ops | `jarvis-grok-code` (API) |
+| Goose | `goose session` on bastion | Terminal agent | `jarvis-grok-code` via **https://llm.lan** |
+| Grafana | https://grafana.lan | NVIDIA 14574 | — |
+| API | https://llm.lan/v1 | OpenAI-shaped | LiteLLM |
+| GitOps | http://git.lan | YAML in `~/cluster` as **agent** | — |
 
-Pins: ~/jarvis-infra/VERSION
+**git.lan stays HTTP**. **agent.lan:18789** is HTTP (hostPort). DNS **192.168.8.16**.
+Pins: `~/jarvis-infra/VERSION`.
