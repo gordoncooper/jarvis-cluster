@@ -8,7 +8,7 @@ Metal, Ansible, and the homepage **image** live in
 
 **Canonical pins:** `jarvis-infra/VERSION` on the bastion
 (`~/jarvis-infra/VERSION`). Do not copy git/image tags into this file as
-source of truth. Read [docs/LESSONS.md](docs/LESSONS.md) before changing
+source of truth. Read **jarvis-infra** `docs/LESSONS.md` and `docs/OPERATING.md` before changing
 anything.
 
 | Item | Value |
@@ -139,12 +139,12 @@ flowchart TB
 
 | Path | Namespace | What |
 | --- | --- | --- |
-| k8s/gitea/ | gitea | git.lan |
-| k8s/inference/ | inference | Ollama, embed, LiteLLM, RuntimeClass |
-| k8s/apps/ | apps | Open WebUI, Piper, homepage (image from infra VERSION) |
-| k8s/agents/ | agents | OpenClaw + RBAC + skills |
-| k8s/monitoring/ | monitoring | Prometheus, Grafana, exporters |
-| k8s/tls/ | traefik | mkcert TLSStore for LAN names |
+| jarvis-infra `bootstrap/gitea.yaml` (not Flux) | gitea | git.lan |
+| clusters/jarvis/inference/ | inference | Ollama, embed, LiteLLM, RuntimeClass |
+| clusters/jarvis/apps/ | apps | Open WebUI, Piper, homepage (image from infra VERSION) |
+| clusters/jarvis/agents/ | agents | OpenClaw + RBAC + skills |
+| clusters/jarvis/monitoring/ | monitoring | Prometheus, Grafana, exporters |
+| clusters/jarvis/tls/ | traefik | mkcert TLSStore for LAN names |
 
 Homepage contract: image is built on apps-01 from jarvis-infra
 (`install-jarvis-home.sh` reads `VERSION`) before Flux applies homepage.yaml.

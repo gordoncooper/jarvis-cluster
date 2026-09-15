@@ -13,5 +13,6 @@ Two repos:
 
 No third repo. No Flux -> GitHub.
 
-SOPS is planned, not done. Rebuild uses chmod 600 files on bastion and
-`restore-bastion-secrets.sh`. See jarvis-infra `docs/REBUILD.md`.
+SOPS + age lives in **jarvis-infra** (`secrets/secrets.sops.yaml`).
+Rebuild: `materialize-bastion-secrets.sh` then `apply-secrets.sh`.
+See jarvis-infra `docs/REBUILD.md` and `docs/OPERATING.md`.

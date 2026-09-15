@@ -1,6 +1,8 @@
 # How to talk to JARVIS
 
 Canonical copy: `jarvis-infra/docs/INTERACT.md`.
+Operator contract: `jarvis-infra/docs/OPERATING.md`.
+Pins: `~/jarvis-infra/VERSION`.
 
 | Surface | URL / cmd | Best for | Model / cost |
 | --- | --- | --- | --- |
@@ -15,4 +17,3 @@ Canonical copy: `jarvis-infra/docs/INTERACT.md`.
 | GitOps | http://git.lan | YAML in `~/cluster` as **agent** | — |
 
 **git.lan stays HTTP**. **agent.lan:18789** is HTTP (hostPort). DNS **192.168.8.16**.
-Pins: `~/jarvis-infra/VERSION`.
