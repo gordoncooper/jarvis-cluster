@@ -8,8 +8,7 @@ Metal, Ansible, and the homepage **image** live in
 
 **Canonical pins:** `jarvis-infra/VERSION` on the bastion
 (`~/jarvis-infra/VERSION`). Do not copy git/image tags into this file as
-source of truth. Read **jarvis-infra** `docs/LESSONS.md` and `docs/OPERATING.md` before changing
-anything.
+source of truth. Read **jarvis-infra** `docs/OPERATING.md` (then LESSONS) before changing YAML.
 
 | Item | Value |
 | --- | --- |
@@ -164,6 +163,21 @@ Live path on the bastion clone is `clusters/jarvis/apps/homepage.yaml`
 | https://llm.lan/v1 | LiteLLM |
 | http://git.lan | Gitea |
 | https://grafana.lan | Grafana |
+
+## Change YAML
+
+Work on the bastion clone of **Gitea**, not GitHub.
+
+1. `cd ~/cluster` as user **agent**
+2. Edit `clusters/jarvis/...` (keep `path: ./clusters/jarvis` — do not rename)
+3. `git push origin main` → `http://git.lan/jarvis/cluster.git`
+4. Flux applies in about a minute, or `flux reconcile kustomization flux-system --with-source`
+5. Proof lives in infra: `~/jarvis-infra/scripts/verify-jarvis.sh`
+6. Mirror (or wait for the 03:30 backup): `~/jarvis-infra/scripts/mirror-to-github.sh`
+
+Ollama, Piper, and LiteLLM images are **digest-pinned** in YAML (`:tag@sha256:…`,
+`IfNotPresent`). Homepage image is **not** pulled: it is imported on apps-01
+from jarvis-infra (`imagePullPolicy: Never`). Do not float those back to `:latest`.
 
 ## Docs and scripts
 
