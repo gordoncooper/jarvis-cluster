@@ -16,8 +16,11 @@ spec:
         jarvis.role: apps
       containers:
         - name: homepage
-          image: docker.io/library/jarvis-home:v0.2
+          image: docker.io/library/jarvis-home:v0.4.5
           imagePullPolicy: Never
+          env:
+            - name: PROMETHEUS_URL
+              value: http://prometheus.monitoring.svc:9090
           ports:
             - { name: http, containerPort: 3000 }
           readinessProbe:
