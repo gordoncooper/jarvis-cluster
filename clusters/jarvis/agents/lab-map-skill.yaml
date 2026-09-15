@@ -1,0 +1,25 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: openclaw-skill-lab-map
+  namespace: agents
+data:
+  SKILL.md: |
+    ---
+    name: lab-map
+    description: Canonical JARVIS URLs and when to use each surface. Read this instead of curling Homepage or Traefik.
+    ---
+    Never curl, wget, or scrape HTML to discover URLs. This file is the map.
+
+    | Gordon opens | URL | For |
+    |---|---|---|
+    | Chat / voice / RAG | https://chat.lan | jarvis-local (cheap) or jarvis-grok-code |
+    | This agent | http://agent.lan:18789 | Cluster ops, live k8s/metrics |
+    | Command board | https://home.lan | Status tiles only — not a source of truth |
+    | Grafana | https://grafana.lan | Graphs |
+    | Git | http://git.lan | Flux origin (HTTP on purpose) |
+    | LLM API | https://llm.lan/v1 | OpenAI-shaped; Goose uses this |
+
+    Node count: `node /home/node/.openclaw/skills/cluster-health/k8s.js nodes`
+    GPU temp: `node /home/node/.openclaw/skills/cluster-metrics/prom.js nvidia_smi_temperature_gpu`
+    Do not use MEMORY.md for live facts. Do not repeat a failed or empty command.

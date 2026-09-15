@@ -31,6 +31,10 @@ data:
           }
         }
       },
+      "tools": {
+        "loopDetection": { "enabled": true },
+        "exec": { "timeoutSeconds": 30, "backgroundMs": 8000 }
+      },
       "gateway": {
         "mode": "local",
         "bind": "lan",
@@ -101,6 +105,8 @@ spec:
               mountPath: /home/node/.openclaw/skills/cluster-metrics
             - name: skill-health
               mountPath: /home/node/.openclaw/skills/cluster-health
+            - name: skill-map
+              mountPath: /home/node/.openclaw/skills/lab-map
           readinessProbe:
             tcpSocket:
               port: http
@@ -126,6 +132,9 @@ spec:
         - name: skill-health
           configMap:
             name: openclaw-skill-cluster-health
+        - name: skill-map
+          configMap:
+            name: openclaw-skill-lab-map
 ---
 apiVersion: v1
 kind: Service

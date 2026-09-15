@@ -5,3 +5,4 @@ resources:
   - rbac.yaml
   - cluster-metrics-skill.yaml
   - cluster-health-skill.yaml
+  - lab-map-skill.yaml
