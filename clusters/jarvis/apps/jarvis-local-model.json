@@ -26,7 +26,11 @@
   "knowledge": [
     {
       "name": "lab-docs",
-      "description": "Cluster briefing (docs/briefing.md)"
+      "description": "Git briefing (docs/briefing.md)"
+    },
+    {
+      "name": "jarvis-learned",
+      "description": "Promoted facts (learned.md)"
     }
   ]
 }
