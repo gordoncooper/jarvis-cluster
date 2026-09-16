@@ -119,6 +119,39 @@ spec:
               memory: 256Mi
             limits:
               memory: 2Gi
+        - name: openai-shim
+          image: ghcr.io/openclaw/openclaw:2026.8.2@sha256:5d25165995041caa6a7175bec82b25ad98c44eb269bb42435da8e27ec06e6be4
+          imagePullPolicy: IfNotPresent
+          command: ["python3", "/shim/openai-shim.py"]
+          ports:
+            - name: openai
+              containerPort: 4001
+          env:
+            - name: SHIM_PORT
+              value: "4001"
+            - name: OPENCLAW_ASK_TIMEOUT
+              value: "120"
+            - name: OPENCLAW_GATEWAY_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: openclaw
+                  key: GATEWAY_TOKEN
+          volumeMounts:
+            - name: openai-shim
+              mountPath: /shim
+              readOnly: true
+          readinessProbe:
+            httpGet:
+              path: /healthz
+              port: 4001
+            initialDelaySeconds: 3
+            periodSeconds: 10
+          resources:
+            requests:
+              cpu: 10m
+              memory: 64Mi
+            limits:
+              memory: 256Mi
       volumes:
         - name: openai-shim
           configMap:
@@ -152,10 +185,10 @@ spec:
   ports:
     - name: http
       port: 18789
-        - name: openai
-          port: 4001
-          targetPort: 4001
       targetPort: http
+    - name: openai
+      port: 4001
+      targetPort: 4001
 ---
 apiVersion: networking.k8s.io/v1
 kind: Ingress
