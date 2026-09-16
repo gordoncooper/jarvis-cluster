@@ -297,30 +297,15 @@ data:
         setInterval(function () { hookFetch(); hookXHR(); hookWS(); }, 2000);
         function pollMark() {
           try {
-            var root = document.querySelector("#app") || document.body;
-            var nodes = root.querySelectorAll("p, li, div, span");
-            var i, s = "";
-            var n = nodes.length;
-            var start = n > 40 ? n - 40 : 0;
-            for (i = start; i < n; i++) s += nodes[i].textContent || "";
-            var a = s.indexOf("\u2060");
-            var b = s.indexOf("\u2060", a + 1);
-            if (a >= 0 && b > a) {
-              var bits = s.slice(a + 1, b);
-              var code = "";
-              for (i = 0; i < bits.length; i++) {
-                if (bits.charCodeAt(i) === 0x200b) code += "0";
-                else if (bits.charCodeAt(i) === 0x200c) code += "1";
-              }
-              if (code.indexOf("001") >= 0) setChip("hands", "HANDS  jarvis-hands");
-              else if (code.indexOf("011") >= 0) setChip("grok", "GROK-CODE");
-              else if (code.indexOf("010") >= 0) setChip("grok", "GROK");
-              else if (code.indexOf("000") >= 0) setChip("local", "LOCAL  ollama/jarvis");
-            }
-            scrapeRaw(s);
+            var s = (document.body && document.body.textContent) || "";
+            if (s.indexOf("⟦H⟧") >= 0) setChip("hands", "HANDS  jarvis-hands");
+            else if (s.indexOf("⟦C⟧") >= 0) setChip("grok", "GROK-CODE");
+            else if (s.indexOf("⟦G⟧") >= 0) setChip("grok", "GROK");
+            else if (s.indexOf("⟦L⟧") >= 0) setChip("local", "LOCAL  ollama/jarvis");
+            else scrapeRaw(s);
           } catch (e) {}
         }
-        setInterval(pollMark, 500);
+        setInterval(pollMark, 400);
         ensure();
       })();
 
