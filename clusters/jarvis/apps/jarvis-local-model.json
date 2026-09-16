@@ -21,7 +21,19 @@
       "builtin_tools": false
     },
     "suggestion_prompts": null,
-    "tags": []
+    "tags": [],
+    "knowledge": [
+      {
+        "id": "5ce94665-4660-4c2f-9874-9b7bd6ade04b",
+        "name": "lab-docs",
+        "description": "Git briefing (docs/briefing.md)"
+      },
+      {
+        "id": "eb4f7191-4c24-4947-80f6-06a10b683e38",
+        "name": "jarvis-learned",
+        "description": "Promoted facts (learned.md)"
+      }
+    ]
   },
   "knowledge": [
     {
