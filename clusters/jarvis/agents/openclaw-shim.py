@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
-"""OpenAI-compatible shim → `openclaw agent` (same pod netNS, gateway :18789)."""
-from http.server import BaseHTTPRequestHandler, HTTPServer
+from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 import json, os, subprocess, traceback
 
 PORT = int(os.environ.get("SHIM_PORT", "4001"))
@@ -36,9 +35,7 @@ def run_agent(msg):
             for x in ((d.get("result") or {}).get("payloads") or [])
             if (x or {}).get("text")
         ]
-        vis = ((d.get("result") or {}).get("meta") or {}).get(
-            "finalAssistantVisibleText"
-        )
+        vis = ((d.get("result") or {}).get("meta") or {}).get("finalAssistantVisibleText")
         text = (texts[-1] if texts else vis) or out[:4000]
     except Exception:
         text = (out or p.stderr or "openclaw failed")[:4000]
@@ -51,13 +48,16 @@ class H(BaseHTTPRequestHandler):
     def log_message(self, fmt, *args):
         print("[shim]", args[0] if args else fmt)
 
-    def _send(self, code, obj):
-        b = json.dumps(obj).encode()
-        self.send_response(code)
-        self.send_header("Content-Type", "application/json")
-        self.send_header("Content-Length", str(len(b)))
-        self.end_headers()
-        self.wfile.write(b)
+    def _send(self, code, obj, ctype="application/json"):
+        b = obj if isinstance(obj, bytes) else json.dumps(obj).encode()
+        try:
+            self.send_response(code)
+            self.send_header("Content-Type", ctype)
+            self.send_header("Content-Length", str(len(b)))
+            self.end_headers()
+            self.wfile.write(b)
+        except BrokenPipeError:
+            pass
 
     def do_GET(self):
         path = self.path.split("?", 1)[0].rstrip("/") or "/"
@@ -84,22 +84,29 @@ class H(BaseHTTPRequestHandler):
             text = run_agent(last_user(body))
         except Exception:
             text = "shim error: " + traceback.format_exc()[-800:]
+        if body.get("stream"):
+            chunk = {
+                "id": "chatcmpl-jarvis-hands",
+                "object": "chat.completion.chunk",
+                "model": "jarvis-hands",
+                "choices": [{"index": 0, "delta": {"content": text}, "finish_reason": "stop"}],
+            }
+            payload = b"data: " + json.dumps(chunk).encode() + b"\n\ndata: [DONE]\n\n"
+            return self._send(200, payload, "text/event-stream")
         return self._send(
             200,
             {
                 "id": "chatcmpl-jarvis-hands",
                 "object": "chat.completion",
                 "model": "jarvis-hands",
-                "choices": [
-                    {
-                        "index": 0,
-                        "message": {"role": "assistant", "content": text},
-                        "finish_reason": "stop",
-                    }
-                ],
+                "choices": [{
+                    "index": 0,
+                    "message": {"role": "assistant", "content": text},
+                    "finish_reason": "stop",
+                }],
             },
         )
 
 
 if __name__ == "__main__":
-    HTTPServer(("0.0.0.0", PORT), H).serve_forever()
+    ThreadingHTTPServer(("0.0.0.0", PORT), H).serve_forever()
