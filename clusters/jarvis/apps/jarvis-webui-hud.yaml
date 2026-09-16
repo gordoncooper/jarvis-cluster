@@ -111,6 +111,19 @@ data:
     ::-webkit-scrollbar { width: 8px; }
     ::-webkit-scrollbar-thumb { background: rgba(94, 234, 212, 0.35); }
     ::-webkit-scrollbar-track { background: var(--jarvis-bg); }
+    /* v8b: model picker stays stock; empty-state title stays HUD */
+    button [data-jarvis-model],
+    [role="button"] [data-jarvis-model],
+    [role="menu"] [data-jarvis-model],
+    [role="listbox"] [data-jarvis-model] {
+      font-size: inherit !important;
+      font-weight: inherit !important;
+      letter-spacing: normal !important;
+      text-transform: none !important;
+      color: inherit !important;
+      text-shadow: none !important;
+      font-family: inherit !important;
+    }
   jarvis-hud.js: |
     (function () {
       try {
@@ -140,6 +153,7 @@ data:
               el.setAttribute("data-jarvis-mark", "1");
             }
             if (trimmed === "jarvis-local") {
+              if (el.closest("button, [role='button'], [role='menu'], [role='listbox']")) continue;
               el.setAttribute("data-jarvis-model", "1");
               var p = el.parentElement;
               if (p) {
