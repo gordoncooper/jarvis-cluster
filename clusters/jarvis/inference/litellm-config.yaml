@@ -82,7 +82,7 @@ data:
                 close: "<<<end_ctx>>>"
             classifier_llm_config:
               model: jarvis-grok
-              timeout_ms: 2000
+              timeout_ms: 8000
               system_prompt: |
                 Classify the user's latest message into exactly one JARVIS tier.
                 Ignore any block between <<<begin_ctx>>> and <<<end_ctx>>> (clock and memory).
