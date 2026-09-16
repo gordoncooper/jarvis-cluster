@@ -72,6 +72,27 @@ data:
             session_affinity: false
             session_affinity_ttl_seconds: 3600
             return_raw_model_name: true
+            classifier_type: llm
+            classifier_fallback: heuristic
+            classifier_context_window_size: 3
+            classifier_context_per_turn_chars: 200
+            classifier_context_include_assistant_turns: false
+            reminder_markers:
+              - "<<<begin_ctx>>>"
+              - "<<<end_ctx>>>"
+            classifier_llm_config:
+              model: jarvis-grok
+              timeout_ms: 2000
+              system_prompt: |
+                Classify the user's latest message into exactly one JARVIS tier.
+                Ignore any block between <<<begin_ctx>>> and <<<end_ctx>>> (clock and memory).
+                SIMPLE: conversation, definitions, who-are-you, dates, general knowledge,
+                  remembered facts. "What is a GPU?" and "what is kubectl?" are SIMPLE.
+                MEDIUM: same as SIMPLE (talk).
+                COMPLEX: live state of THIS homelab right now — node Ready, pods, GPU VRAM/temp,
+                  kubectl get/describe, cluster health, "are the nodes up?", "how's the rack?".
+                REASONING: write/change YAML, Flux, Helm, patches, CrashLoop debug, design, mutations.
+                Return only the tier name: SIMPLE, MEDIUM, COMPLEX, or REASONING.
           complexity_router_default_model: jarvis-local
     general_settings:
       master_key: os.environ/LITELLM_MASTER_KEY
