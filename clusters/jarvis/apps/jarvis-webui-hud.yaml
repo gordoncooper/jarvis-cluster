@@ -194,7 +194,9 @@ data:
         function pending() { setChip("wait", "…"); }
         function scrapeRaw(text) {
           if (!text) return;
-          var s = String(text);
+          var s = typeof text === "string" ? text : "";
+          if (!s && text && text.data) s = String(text.data);
+          if (!s) return;
           if (/chatcmpl-jarvis-hands|jarvis-hands|"model"\s*:\s*"openclaw"/i.test(s)) {
             setChip("hands", "HANDS  jarvis-hands"); return;
           }
@@ -208,9 +210,7 @@ data:
             setChip("grok", "GROK"); return;
           }
         }
-        function watchUrl(url) {
-          return /api/i.test(String(url || ""));
-        }
+        function watchUrl(url) { return /api|socket|ws/i.test(String(url || "")); }
         document.addEventListener("keydown", function (e) {
           if (e.key !== "Enter" || e.shiftKey) return;
           var t = e.target;
@@ -219,12 +219,11 @@ data:
         }, true);
         function hookFetch() {
           var orig = window.fetch;
-          if (!orig || orig.__jarvisChip2) return;
+          if (!orig || orig.__jarvisChip3) return;
           function wrapped(input, init) {
             var url = typeof input === "string" ? input : (input && input.url) || "";
             if (watchUrl(url)) pending();
             return orig.apply(this, arguments).then(function (res) {
-              if (!watchUrl(url) && !watchUrl(res && res.url)) return res;
               try {
                 var c = res.clone();
                 if (c.body && c.body.getReader) {
@@ -246,25 +245,56 @@ data:
               return res;
             });
           }
-          wrapped.__jarvisChip2 = true;
+          wrapped.__jarvisChip3 = true;
           window.fetch = wrapped;
         }
         function hookXHR() {
           var XHR = XMLHttpRequest.prototype;
-          if (XHR.__jarvisChip2) return;
+          if (XHR.__jarvisChip3) return;
           var _open = XHR.open, _send = XHR.send;
           XHR.open = function (m, u) { this.__jarvisUrl = u; return _open.apply(this, arguments); };
           XHR.send = function () {
-            if (watchUrl(this.__jarvisUrl)) pending();
             this.addEventListener("progress", function () { scrapeRaw(this.responseText || ""); });
             this.addEventListener("load", function () { scrapeRaw(this.responseText || ""); });
             return _send.apply(this, arguments);
           };
-          XHR.__jarvisChip2 = true;
+          XHR.__jarvisChip3 = true;
         }
+        function hookWS() {
+          var WS = window.WebSocket;
+          if (!WS || WS.__jarvisChip3) return;
+          function Wrap(url, proto) {
+            var ws = proto !== undefined ? new WS(url, proto) : new WS(url);
+            ws.addEventListener("message", function (ev) { scrapeRaw(ev && ev.data); });
+            return ws;
+          }
+          Wrap.prototype = WS.prototype;
+          Wrap.CONNECTING = WS.CONNECTING; Wrap.OPEN = WS.OPEN;
+          Wrap.CLOSING = WS.CLOSING; Wrap.CLOSED = WS.CLOSED;
+          Wrap.__jarvisChip3 = true;
+          window.WebSocket = Wrap;
+        }
+        function hookET() {
+          var proto = EventTarget.prototype;
+          if (proto.__jarvisChip3) return;
+          var ae = proto.addEventListener;
+          proto.addEventListener = function (type, fn, opt) {
+            if (type === "message" && typeof fn === "function") {
+              var wrapped = function (ev) {
+                try { scrapeRaw(ev && ev.data); } catch (e) {}
+                return fn.apply(this, arguments);
+              };
+              return ae.call(this, type, wrapped, opt);
+            }
+            return ae.call(this, type, fn, opt);
+          };
+          proto.__jarvisChip3 = true;
+        }
+        hookET();
         hookFetch();
         hookXHR();
-        setInterval(function () { hookFetch(); hookXHR(); }, 2000);
+        hookWS();
+        setInterval(function () { hookFetch(); hookXHR(); hookWS(); }, 2000);
         ensure();
       })();
 
@@ -369,7 +399,9 @@ data:
         "<script id=\"jarvis-hud-js\">" + js + "</script>"
         "<!--/jarvis-hud-->"
     )
-    if "</head>" in t:
+    if "<head>" in t:
+        t = t.replace("<head>", "<head>" + block, 1)
+    elif "</head>" in t:
         t = t.replace("</head>", block + "\n</head>", 1)
     else:
         t = block + t
