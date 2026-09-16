@@ -39,7 +39,9 @@ spec:
                 configMapKeyRef: { name: jarvis-persona, key: system.txt }
             - { name: ENABLE_SIGNUP, value: "true" }
             - { name: WEBUI_AUTH, value: "true" }
-            - { name: ENABLE_NATIVE_FUNCTION_CALLING, value: "true" }
+            - { name: ENABLE_NATIVE_FUNCTION_CALLING, value: "false" }
+            - { name: ENABLE_MODEL_FILTER, value: "true" }
+            - { name: MODEL_FILTER_LIST, value: "jarvis;jarvis-local;jarvis-grok;jarvis-grok-code" }
             - { name: USER_PERMISSIONS_WORKSPACE_TOOLS_ACCESS, value: "false" }
             - { name: ENABLE_FOLLOW_UP_GENERATION, value: "false" }
             - { name: WEBUI_URL, value: "https://chat.lan" }
