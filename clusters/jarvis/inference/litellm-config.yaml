@@ -51,13 +51,13 @@ data:
             tiers:
               SIMPLE: jarvis-local
               MEDIUM: jarvis-local
-              COMPLEX: jarvis-grok
+              COMPLEX: jarvis-hands
               REASONING: jarvis-grok-code
             keyword_tier_rules:
               - keywords: ["hi", "hello", "hey", "thanks"]
                 tier: SIMPLE
-              - keywords: ["kubectl", "k8s", "kubernetes", "nodes", "gpu", "vram", "pod status", "cluster status"]
-                tier: SIMPLE
+              - keywords: ["cluster-health", "cluster-metrics", "lab-map", "kubectl get", "kubectl describe", "kubectl logs", "are nodes ready", "nodes ready", "get nodes", "get pods", "gpu vram", "nvidia-smi", "cluster status"]
+                tier: COMPLEX
               - keywords: ["flux", "kustomization", "helm upgrade", "git commit", "write yaml", "patch deployment", "crashloop", "delete pod"]
                 tier: REASONING
             custom_technical_keywords: [kubectl, flux, k3s, kubernetes, helm, etcd, traefik]
