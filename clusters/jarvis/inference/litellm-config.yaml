@@ -28,7 +28,14 @@ data:
           additional_drop_params: ["max_completion_tokens"]
         rpm: 20
         tpm: 40000
-      - model_name: jarvis-grok-code
+    
+  - model_name: jarvis-hands
+    litellm_params:
+      model: openai/openclaw
+      api_base: http://openclaw.agents.svc.cluster.local:4001/v1
+      api_key: sk-local
+      drop_params: true
+  - model_name: jarvis-grok-code
         litellm_params:
           model: xai/grok-code-fast-1
           api_key: os.environ/XAI_API_KEY

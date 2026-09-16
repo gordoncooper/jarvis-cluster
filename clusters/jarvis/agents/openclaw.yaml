@@ -120,6 +120,10 @@ spec:
             limits:
               memory: 2Gi
       volumes:
+        - name: openai-shim
+          configMap:
+            name: openclaw-openai-shim
+            defaultMode: 0755
         - name: config
           configMap:
             name: openclaw-config
@@ -148,6 +152,9 @@ spec:
   ports:
     - name: http
       port: 18789
+        - name: openai
+          port: 4001
+          targetPort: 4001
       targetPort: http
 ---
 apiVersion: networking.k8s.io/v1
