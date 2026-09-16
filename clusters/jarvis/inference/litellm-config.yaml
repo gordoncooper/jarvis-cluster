@@ -56,7 +56,15 @@ data:
             keyword_tier_rules:
               - keywords: ["hi", "hello", "hey", "thanks", "who are you", "who am i", "good day", "good morning"]
                 tier: SIMPLE
-              - keywords: ["cluster-health", "cluster-metrics", "kubectl get", "kubectl describe", "kubectl logs", "are nodes ready", "nodes ready", "get nodes", "get pods", "nvidia-smi", "live cluster health", "live telemetry"]
+              - keywords: [
+                  "cluster-health", "cluster-metrics", "nvidia-smi",
+                  "kubectl get", "kubectl describe", "kubectl logs", "kubectl pods",
+                  "are nodes ready", "are the nodes ready", "are nodes up", "are the nodes up",
+                  "nodes ready", "get nodes", "get all nodes", "node status", "nodes status",
+                  "get pods", "get all pods", "list pods", "list the pods", "are pods ready",
+                  "are all pods ready", "are pods up", "pod status", "pods ready",
+                  "live cluster health", "live telemetry"
+                ]
                 tier: COMPLEX
               - keywords: ["flux", "kustomization", "helm upgrade", "git commit", "write yaml", "patch deployment", "crashloop", "delete pod"]
                 tier: REASONING
