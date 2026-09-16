@@ -1,14 +1,18 @@
 apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: openclaw-openai-shim
+  namespace: agents
 data:
   openai-shim.py: |
     #!/usr/bin/env python3
     from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
     import json, os, subprocess, traceback
-
+    
     PORT = int(os.environ.get("SHIM_PORT", "4001"))
     TIMEOUT = int(os.environ.get("OPENCLAW_ASK_TIMEOUT", "120"))
-
-
+    
+    
     def last_user(body):
         for m in reversed(body.get("messages") or []):
             if m.get("role") != "user":
@@ -20,8 +24,8 @@ data:
                 )
             return str(c or "")
         return ""
-
-
+    
+    
     def run_agent(msg):
         msg = (msg or "ping")[:8000]
         p = subprocess.run(
@@ -45,12 +49,12 @@ data:
         if p.returncode != 0 and not (p.stdout or "").strip():
             text = "openclaw exit %s: %s" % (p.returncode, (p.stderr or "")[:800])
         return text
-
-
+    
+    
     class H(BaseHTTPRequestHandler):
         def log_message(self, fmt, *args):
             print("[shim]", args[0] if args else fmt)
-
+    
         def _send(self, code, obj, ctype="application/json"):
             b = obj if isinstance(obj, bytes) else json.dumps(obj).encode()
             try:
@@ -61,7 +65,7 @@ data:
                 self.wfile.write(b)
             except BrokenPipeError:
                 pass
-
+    
         def do_GET(self):
             path = self.path.split("?", 1)[0].rstrip("/") or "/"
             if path in ("/health", "/healthz"):
@@ -72,7 +76,7 @@ data:
                     {"object": "list", "data": [{"id": "openclaw", "object": "model"}]},
                 )
             return self._send(404, {"error": "not found"})
-
+    
         def do_POST(self):
             path = self.path.split("?", 1)[0]
             n = int(self.headers.get("Content-Length") or 0)
@@ -109,12 +113,7 @@ data:
                     }],
                 },
             )
-
-
+    
+    
     if __name__ == "__main__":
         ThreadingHTTPServer(("0.0.0.0", PORT), H).serve_forever()
-kind: ConfigMap
-metadata:
-  namespace: agents
-  name: openclaw-openai-shim
-  namespace: agents
