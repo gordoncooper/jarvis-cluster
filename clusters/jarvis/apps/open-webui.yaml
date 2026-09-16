@@ -33,7 +33,7 @@ spec:
               valueFrom: { secretKeyRef: { name: open-webui, key: OPENAI_API_KEY } }
             - name: WEBUI_SECRET_KEY
               valueFrom: { secretKeyRef: { name: open-webui, key: WEBUI_SECRET_KEY } }
-            - { name: DEFAULT_MODELS, value: jarvis-local }
+            - { name: DEFAULT_MODELS, value: jarvis }
             - name: DEFAULT_SYSTEM_PROMPT
               valueFrom:
                 configMapKeyRef: { name: jarvis-persona, key: system.txt }

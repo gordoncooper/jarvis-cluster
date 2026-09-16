@@ -36,5 +36,24 @@ data:
           additional_drop_params: ["max_completion_tokens"]
         rpm: 10
         tpm: 30000
+      - model_name: jarvis
+        litellm_params:
+          model: auto_router/complexity_router
+          drop_params: true
+          complexity_router_config:
+            tiers:
+              SIMPLE: jarvis-local
+              MEDIUM: jarvis-local
+              COMPLEX: jarvis-grok
+              REASONING: jarvis-grok-code
+            keyword_tier_rules:
+              - keywords: ["hi", "hello", "hey", "thanks"]
+                tier: SIMPLE
+              - keywords: ["kubectl", "flux", "k3s", "k8s", "kubernetes", "ssh", "deploy", "helm", "yaml"]
+                tier: REASONING
+            custom_technical_keywords: [kubectl, flux, k3s, kubernetes, helm, etcd, traefik]
+            session_affinity: true
+            session_affinity_ttl_seconds: 3600
+          complexity_router_default_model: jarvis-local
     general_settings:
       master_key: os.environ/LITELLM_MASTER_KEY
