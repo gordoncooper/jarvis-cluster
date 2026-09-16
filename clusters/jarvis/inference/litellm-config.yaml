@@ -54,9 +54,9 @@ data:
               COMPLEX: jarvis-hands
               REASONING: jarvis-grok-code
             keyword_tier_rules:
-              - keywords: ["hi", "hello", "hey", "thanks"]
+              - keywords: ["hi", "hello", "hey", "thanks", "who are you", "who am i", "good day", "good morning"]
                 tier: SIMPLE
-              - keywords: ["cluster-health", "cluster-metrics", "lab-map", "kubectl get", "kubectl describe", "kubectl logs", "are nodes ready", "nodes ready", "get nodes", "get pods", "gpu vram", "nvidia-smi", "cluster status"]
+              - keywords: ["cluster-health", "cluster-metrics", "kubectl get", "kubectl describe", "kubectl logs", "are nodes ready", "nodes ready", "get nodes", "get pods", "nvidia-smi", "live cluster health", "live telemetry"]
                 tier: COMPLEX
               - keywords: ["flux", "kustomization", "helm upgrade", "git commit", "write yaml", "patch deployment", "crashloop", "delete pod"]
                 tier: REASONING
