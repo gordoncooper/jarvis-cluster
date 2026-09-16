@@ -208,6 +208,9 @@ data:
             setChip("grok", "GROK"); return;
           }
         }
+        function watchUrl(url) {
+          return /api/i.test(String(url || ""));
+        }
         document.addEventListener("keydown", function (e) {
           if (e.key !== "Enter" || e.shiftKey) return;
           var t = e.target;
@@ -216,25 +219,52 @@ data:
         }, true);
         function hookFetch() {
           var orig = window.fetch;
-          if (!orig || orig.__jarvisChip) return;
+          if (!orig || orig.__jarvisChip2) return;
           function wrapped(input, init) {
-            var p = orig.apply(this, arguments);
-            try {
-              var url = typeof input === "string" ? input : (input && input.url) || "";
-              if (/complet|\/api\/chat|generate/i.test(url)) {
-                pending();
-                p.then(function (res) {
-                  try { res.clone().text().then(scrapeRaw); } catch (e) {}
-                }).catch(function () {});
-              }
-            } catch (e) {}
-            return p;
+            var url = typeof input === "string" ? input : (input && input.url) || "";
+            if (watchUrl(url)) pending();
+            return orig.apply(this, arguments).then(function (res) {
+              if (!watchUrl(url) && !watchUrl(res && res.url)) return res;
+              try {
+                var c = res.clone();
+                if (c.body && c.body.getReader) {
+                  var reader = c.body.getReader();
+                  var dec = new TextDecoder();
+                  var acc = "";
+                  function pump() {
+                    return reader.read().then(function (r) {
+                      if (r.value) acc += dec.decode(r.value, {stream: true});
+                      scrapeRaw(acc);
+                      if (!r.done) return pump();
+                    });
+                  }
+                  pump().catch(function () {});
+                } else {
+                  c.text().then(scrapeRaw).catch(function () {});
+                }
+              } catch (e) {}
+              return res;
+            });
           }
-          wrapped.__jarvisChip = true;
+          wrapped.__jarvisChip2 = true;
           window.fetch = wrapped;
         }
+        function hookXHR() {
+          var XHR = XMLHttpRequest.prototype;
+          if (XHR.__jarvisChip2) return;
+          var _open = XHR.open, _send = XHR.send;
+          XHR.open = function (m, u) { this.__jarvisUrl = u; return _open.apply(this, arguments); };
+          XHR.send = function () {
+            if (watchUrl(this.__jarvisUrl)) pending();
+            this.addEventListener("progress", function () { scrapeRaw(this.responseText || ""); });
+            this.addEventListener("load", function () { scrapeRaw(this.responseText || ""); });
+            return _send.apply(this, arguments);
+          };
+          XHR.__jarvisChip2 = true;
+        }
         hookFetch();
-        setInterval(hookFetch, 2000);
+        hookXHR();
+        setInterval(function () { hookFetch(); hookXHR(); }, 2000);
         ensure();
       })();
 
