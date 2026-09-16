@@ -1,4 +1,3 @@
----
 apiVersion: v1
 kind: Namespace
 metadata:
@@ -10,44 +9,18 @@ metadata:
   name: openclaw-config
   namespace: agents
 data:
-  openclaw.json: |
-    {
-      "agents": {
-        "defaults": {
-          "model": { "primary": "jarvis/jarvis-grok-code" }
-        }
-      },
-      "models": {
-        "mode": "merge",
-        "providers": {
-          "jarvis": {
-            "baseUrl": "http://litellm.inference.svc.cluster.local:4000/v1",
-            "apiKey": "${LITELLM_MASTER_KEY}",
-            "api": "openai-completions",
-            "models": [
-              { "id": "jarvis-grok-code", "name": "JARVIS Grok Code" },
-              { "id": "jarvis-local", "name": "JARVIS Local 7B" }
-            ]
-          }
-        }
-      },
-      "tools": {
-        "loopDetection": { "enabled": true },
-        "exec": { "timeoutSeconds": 90, "backgroundMs": 8000 }
-      },
-      "gateway": {
-        "mode": "local",
-        "bind": "lan",
-        "trustedProxies": ["10.42.0.0/16", "10.43.0.0/16"],
-        "controlUi": {
-          "allowedOrigins": [
-            "http://agent.lan",
-            "http://agent.lan:18789",
-            "http://192.168.8.16:18789"
-          ]
-        }
-      }
-    }
+  openclaw.json: "{\n  \"agents\": {\n    \"defaults\": {\n      \"model\": {\n        \"primary\": \"jarvis/jarvis-grok\"\
+    \n      },\n      \"timeoutSeconds\": 90\n    }\n  },\n  \"models\": {\n    \"mode\": \"merge\",\n    \"providers\": {\n\
+    \      \"jarvis\": {\n        \"baseUrl\": \"http://litellm.inference.svc.cluster.local:4000/v1\",\n        \"apiKey\"\
+    : \"${LITELLM_MASTER_KEY}\",\n        \"api\": \"openai-completions\",\n        \"models\": [\n          {\n         \
+    \   \"id\": \"jarvis-grok-code\",\n            \"name\": \"JARVIS Grok Code\"\n          },\n          {\n           \
+    \ \"id\": \"jarvis-local\",\n            \"name\": \"JARVIS Local 7B\"\n          },\n          {\n            \"id\"\
+    : \"jarvis-grok\",\n            \"name\": \"JARVIS Grok Fast\"\n          }\n        ]\n      }\n    }\n  },\n  \"tools\"\
+    : {\n    \"loopDetection\": {\n      \"enabled\": true\n    },\n    \"exec\": {\n      \"timeoutSeconds\": 90,\n     \
+    \ \"backgroundMs\": 8000\n    }\n  },\n  \"gateway\": {\n    \"mode\": \"local\",\n    \"bind\": \"lan\",\n    \"trustedProxies\"\
+    : [\n      \"10.42.0.0/16\",\n      \"10.43.0.0/16\"\n    ],\n    \"controlUi\": {\n      \"allowedOrigins\": [\n    \
+    \    \"http://agent.lan\",\n        \"http://agent.lan:18789\",\n        \"http://192.168.8.16:18789\"\n      ]\n    }\n\
+    \  }\n}"
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -70,109 +43,113 @@ spec:
       nodeSelector:
         jarvis.role: apps
       containers:
-        - name: openclaw
-          image: ghcr.io/openclaw/openclaw:2026.8.2@sha256:5d25165995041caa6a7175bec82b25ad98c44eb269bb42435da8e27ec06e6be4
-          imagePullPolicy: IfNotPresent
-          command: ["openclaw", "gateway"]
-          ports:
-            - name: http
-              containerPort: 18789
-              hostPort: 18789
-          env:
-            - name: OPENAI_API_KEY
-              valueFrom:
-                secretKeyRef:
-                  name: openclaw
-                  key: LITELLM_MASTER_KEY
-            - name: LITELLM_MASTER_KEY
-              valueFrom:
-                secretKeyRef:
-                  name: openclaw
-                  key: LITELLM_MASTER_KEY
-            - name: OPENCLAW_GATEWAY_TOKEN
-              valueFrom:
-                secretKeyRef:
-                  name: openclaw
-                  key: GATEWAY_TOKEN
-            - name: OPENCLAW_GATEWAY_PORT
-              value: "18789"
-          volumeMounts:
-            - name: config
-              mountPath: /home/node/.openclaw/openclaw.json
-              subPath: openclaw.json
-            - name: data
-              mountPath: /home/node/.openclaw/workspace
-            - name: skill-metrics
-              mountPath: /home/node/.openclaw/skills/cluster-metrics
-            - name: skill-health
-              mountPath: /home/node/.openclaw/skills/cluster-health
-            - name: skill-map
-              mountPath: /home/node/.openclaw/skills/lab-map
-          readinessProbe:
-            tcpSocket:
-              port: http
-            initialDelaySeconds: 15
-            periodSeconds: 10
-          resources:
-            requests:
-              cpu: 100m
-              memory: 256Mi
-            limits:
-              memory: 2Gi
-        - name: openai-shim
-          image: ghcr.io/openclaw/openclaw:2026.8.2@sha256:5d25165995041caa6a7175bec82b25ad98c44eb269bb42435da8e27ec06e6be4
-          imagePullPolicy: IfNotPresent
-          command: ["python3", "/shim/openai-shim.py"]
-          ports:
-            - name: openai
-              containerPort: 4001
-          env:
-            - name: SHIM_PORT
-              value: "4001"
-            - name: OPENCLAW_ASK_TIMEOUT
-              value: "120"
-            - name: OPENCLAW_GATEWAY_TOKEN
-              valueFrom:
-                secretKeyRef:
-                  name: openclaw
-                  key: GATEWAY_TOKEN
-          volumeMounts:
-            - name: openai-shim
-              mountPath: /shim
-              readOnly: true
-          readinessProbe:
-            httpGet:
-              path: /healthz
-              port: 4001
-            initialDelaySeconds: 3
-            periodSeconds: 10
-          resources:
-            requests:
-              cpu: 50m
-              memory: 256Mi
-            limits:
-              memory: 2Gi
-      volumes:
-        - name: openai-shim
-          configMap:
-            name: openclaw-openai-shim
-            defaultMode: 0755
+      - name: openclaw
+        image: ghcr.io/openclaw/openclaw:2026.8.2@sha256:5d25165995041caa6a7175bec82b25ad98c44eb269bb42435da8e27ec06e6be4
+        imagePullPolicy: IfNotPresent
+        command:
+        - openclaw
+        - gateway
+        ports:
+        - name: http
+          containerPort: 18789
+          hostPort: 18789
+        env:
+        - name: OPENAI_API_KEY
+          valueFrom:
+            secretKeyRef:
+              name: openclaw
+              key: LITELLM_MASTER_KEY
+        - name: LITELLM_MASTER_KEY
+          valueFrom:
+            secretKeyRef:
+              name: openclaw
+              key: LITELLM_MASTER_KEY
+        - name: OPENCLAW_GATEWAY_TOKEN
+          valueFrom:
+            secretKeyRef:
+              name: openclaw
+              key: GATEWAY_TOKEN
+        - name: OPENCLAW_GATEWAY_PORT
+          value: '18789'
+        volumeMounts:
         - name: config
-          configMap:
-            name: openclaw-config
+          mountPath: /home/node/.openclaw/openclaw.json
+          subPath: openclaw.json
         - name: data
-          hostPath:
-            path: /cluster/local/openclaw
-            type: DirectoryOrCreate
+          mountPath: /home/node/.openclaw/workspace
         - name: skill-metrics
-          configMap:
-            name: openclaw-skill-cluster-metrics
+          mountPath: /home/node/.openclaw/skills/cluster-metrics
         - name: skill-health
-          configMap:
-            name: openclaw-skill-cluster-health
+          mountPath: /home/node/.openclaw/skills/cluster-health
         - name: skill-map
-          configMap:
-            name: openclaw-skill-lab-map
+          mountPath: /home/node/.openclaw/skills/lab-map
+        readinessProbe:
+          tcpSocket:
+            port: http
+          initialDelaySeconds: 15
+          periodSeconds: 10
+        resources:
+          requests:
+            cpu: 100m
+            memory: 256Mi
+          limits:
+            memory: 2Gi
+      - name: openai-shim
+        image: ghcr.io/openclaw/openclaw:2026.8.2@sha256:5d25165995041caa6a7175bec82b25ad98c44eb269bb42435da8e27ec06e6be4
+        imagePullPolicy: IfNotPresent
+        command:
+        - python3
+        - /shim/openai-shim.py
+        ports:
+        - name: openai
+          containerPort: 4001
+        env:
+        - name: SHIM_PORT
+          value: '4001'
+        - name: OPENCLAW_ASK_TIMEOUT
+          value: '120'
+        - name: OPENCLAW_GATEWAY_TOKEN
+          valueFrom:
+            secretKeyRef:
+              name: openclaw
+              key: GATEWAY_TOKEN
+        volumeMounts:
+        - name: openai-shim
+          mountPath: /shim
+          readOnly: true
+        readinessProbe:
+          httpGet:
+            path: /healthz
+            port: 4001
+          initialDelaySeconds: 3
+          periodSeconds: 10
+        resources:
+          requests:
+            cpu: 50m
+            memory: 256Mi
+          limits:
+            memory: 2Gi
+      volumes:
+      - name: openai-shim
+        configMap:
+          name: openclaw-openai-shim
+          defaultMode: 493
+      - name: config
+        configMap:
+          name: openclaw-config
+      - name: data
+        hostPath:
+          path: /cluster/local/openclaw
+          type: DirectoryOrCreate
+      - name: skill-metrics
+        configMap:
+          name: openclaw-skill-cluster-metrics
+      - name: skill-health
+        configMap:
+          name: openclaw-skill-cluster-health
+      - name: skill-map
+        configMap:
+          name: openclaw-skill-lab-map
 ---
 apiVersion: v1
 kind: Service
@@ -183,12 +160,12 @@ spec:
   selector:
     app: openclaw
   ports:
-    - name: http
-      port: 18789
-      targetPort: http
-    - name: openai
-      port: 4001
-      targetPort: 4001
+  - name: http
+    port: 18789
+    targetPort: http
+  - name: openai
+    port: 4001
+    targetPort: 4001
 ---
 apiVersion: networking.k8s.io/v1
 kind: Ingress
@@ -200,13 +177,13 @@ metadata:
 spec:
   ingressClassName: traefik
   rules:
-    - host: agent.lan
-      http:
-        paths:
-          - path: /
-            pathType: Prefix
-            backend:
-              service:
-                name: openclaw
-                port:
-                  number: 18789
+  - host: agent.lan
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: openclaw
+            port:
+              number: 18789
