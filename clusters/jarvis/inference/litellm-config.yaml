@@ -49,7 +49,9 @@ data:
             keyword_tier_rules:
               - keywords: ["hi", "hello", "hey", "thanks"]
                 tier: SIMPLE
-              - keywords: ["kubectl", "flux", "k3s", "k8s", "kubernetes", "ssh", "deploy", "helm", "yaml"]
+              - keywords: ["kubectl", "k8s", "kubernetes", "nodes", "gpu", "vram", "pod status", "cluster status"]
+                tier: SIMPLE
+              - keywords: ["flux apply", "flux reconcile", "helm upgrade", "git commit", "write yaml", "patch deployment", "crashloop", "delete pod"]
                 tier: REASONING
             custom_technical_keywords: [kubectl, flux, k3s, kubernetes, helm, etcd, traefik]
             session_affinity: true
