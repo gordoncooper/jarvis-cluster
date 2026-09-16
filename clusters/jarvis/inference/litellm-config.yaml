@@ -51,10 +51,10 @@ data:
                 tier: SIMPLE
               - keywords: ["kubectl", "k8s", "kubernetes", "nodes", "gpu", "vram", "pod status", "cluster status"]
                 tier: SIMPLE
-              - keywords: ["flux apply", "flux reconcile", "helm upgrade", "git commit", "write yaml", "patch deployment", "crashloop", "delete pod"]
+              - keywords: ["flux", "kustomization", "helm upgrade", "git commit", "write yaml", "patch deployment", "crashloop", "delete pod"]
                 tier: REASONING
             custom_technical_keywords: [kubectl, flux, k3s, kubernetes, helm, etcd, traefik]
-            session_affinity: true
+            session_affinity: false
             session_affinity_ttl_seconds: 3600
             return_raw_model_name: true
           complexity_router_default_model: jarvis-local
