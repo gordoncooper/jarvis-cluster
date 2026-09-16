@@ -1,0 +1,72 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: jarvis-webui-hud
+  namespace: apps
+data:
+  jarvis-hud.css: |
+    /* JARVIS HUD for Open WebUI 0.11.3 — composer/mic/TTS left alone */
+    :root {
+      --jarvis-bg: #07090b;
+      --jarvis-panel: #0b1014;
+      --jarvis-cyan: #5eead4;
+      --jarvis-text: #d5e6ea;
+      --jarvis-dim: #8aa0a8;
+      --jarvis-line: rgba(94, 234, 212, 0.2);
+    }
+    html, body, #app {
+      background: var(--jarvis-bg) !important;
+      color: var(--jarvis-text);
+    }
+    .dark body,
+    .dark #app {
+      background: var(--jarvis-bg) !important;
+    }
+    aside {
+      background: var(--jarvis-panel) !important;
+      box-shadow: inset -1px 0 0 var(--jarvis-line);
+    }
+    header {
+      background: var(--jarvis-bg) !important;
+      border-bottom: 1px solid var(--jarvis-line) !important;
+    }
+    aside .self-center.font-medium,
+    aside .font-medium {
+      color: var(--jarvis-cyan) !important;
+      font-family: ui-monospace, SFMono-Regular, Menlo, monospace !important;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      font-size: 12px !important;
+    }
+    a[href*="openwebui.com"],
+    a[href*="github.com/open-webui"] {
+      opacity: 0.35;
+    }
+  inject-hud.sh: |
+    #!/bin/bash
+    set -euo pipefail
+    python3 - << 'HUDPY'
+    from pathlib import Path
+    import re
+    css = Path("/hud/jarvis-hud.css").read_text()
+    p = Path("/app/build/index.html")
+    t = p.read_text()
+    t = re.sub(r"<!--jarvis-hud-->.*?<!--/jarvis-hud-->", "", t, flags=re.S)
+    block = "<!--jarvis-hud--><style id=\"jarvis-hud\">" + css + "</style><!--/jarvis-hud-->"
+    if "</head>" in t:
+        t = t.replace("</head>", block + "\n</head>", 1)
+    else:
+        t = block + t
+    t = t.replace("<title>Open WebUI</title>", "<title>JARVIS</title>")
+    p.write_text(t)
+    print("hud injected css_bytes", len(css), "index", p.stat().st_size, flush=True)
+    HUDPY
+    for s in /app/backend/start.sh /app/start.sh start.sh; do
+      if [ -f "$s" ]; then
+        echo "exec $s" >&2
+        exec bash "$s"
+      fi
+    done
+    echo "FATAL: no start.sh" >&2
+    ls -la /app /app/backend 2>/dev/null | head -40 >&2
+    exit 1
