@@ -78,8 +78,8 @@ data:
             classifier_context_per_turn_chars: 200
             classifier_context_include_assistant_turns: false
             reminder_markers:
-              - "<<<begin_ctx>>>"
-              - "<<<end_ctx>>>"
+              - open: "<<<begin_ctx>>>"
+                close: "<<<end_ctx>>>"
             classifier_llm_config:
               model: jarvis-grok
               timeout_ms: 2000
