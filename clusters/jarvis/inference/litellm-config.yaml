@@ -52,7 +52,10 @@ data:
               MEDIUM: jarvis-local
               COMPLEX: jarvis-grok
               REASONING: jarvis-grok-code
+              HANDS: jarvis-hands
             keyword_tier_rules:
+              - keywords: ["are nodes ready", "kubectl get", "kubectl describe", "kubectl logs", "cluster-health"]
+                tier: HANDS
               - keywords: ["hi", "hello", "hey", "thanks"]
                 tier: SIMPLE
               - keywords: ["kubectl", "k8s", "kubernetes", "nodes", "gpu", "vram", "pod status", "cluster status"]
