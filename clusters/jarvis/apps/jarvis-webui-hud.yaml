@@ -3,27 +3,31 @@ kind: ConfigMap
 metadata:
   name: jarvis-webui-hud
   namespace: apps
+  annotations:
+    jarvis.hud: "v4 generic html/body/#app — re-check after open-webui image bumps"
 data:
   jarvis-hud.css: |
-    /* JARVIS HUD v3 — Open WebUI 0.11.3. Mic/TTS/composer layout untouched. */
+    /* JARVIS HUD v4 — generic hooks (html/body/#app/aside). Composer/mic layout untouched. */
     :root {
       --jarvis-bg: #07090b;
       --jarvis-panel: #0b1014;
       --jarvis-cyan: #5eead4;
       --jarvis-text: #d5e6ea;
-      --jarvis-dim: #7d939c;
       --jarvis-line: rgba(94, 234, 212, 0.32);
     }
-    html, body, #app {
+    html, body, #app,
+    #app > div,
+    main {
       background-color: var(--jarvis-bg) !important;
       color: var(--jarvis-text);
+      background-image: none !important;
     }
     body::before {
       content: "";
       position: fixed;
       top: 0; left: 0; right: 0;
       height: 2px;
-      background: linear-gradient(90deg, var(--jarvis-cyan) 0%, var(--jarvis-cyan) 18%, transparent 70%);
+      background: linear-gradient(90deg, var(--jarvis-cyan) 0%, var(--jarvis-cyan) 22%, transparent 72%);
       z-index: 9999;
       pointer-events: none;
     }
@@ -33,21 +37,25 @@ data:
       inset: 0;
       pointer-events: none;
       z-index: 0;
-      opacity: 0.22;
+      opacity: 1;
+      background-color: var(--jarvis-bg);
       background-image:
-        linear-gradient(rgba(94, 234, 212, 0.07) 1px, transparent 1px),
-        linear-gradient(90deg, rgba(94, 234, 212, 0.07) 1px, transparent 1px);
-      background-size: 40px 40px;
-      mask-image: radial-gradient(ellipse at 50% 20%, #000 30%, transparent 75%);
+        linear-gradient(rgba(94, 234, 212, 0.16) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(94, 234, 212, 0.16) 1px, transparent 1px);
+      background-size: 28px 28px;
     }
+    #app, main, #sidebar, aside { position: relative; z-index: 1; }
     #sidebar, aside {
       background: var(--jarvis-panel) !important;
       box-shadow: inset 3px 0 0 var(--jarvis-cyan) !important;
       border-right: 1px solid var(--jarvis-line) !important;
-      position: relative;
-      z-index: 1;
     }
-    /* brand */
+    .bg-white, .bg-gray-50, .bg-gray-100, .bg-gray-200,
+    .bg-gray-800, .bg-gray-850, .bg-gray-900, .bg-gray-950,
+    .dark .bg-white, .dark .bg-gray-50,
+    .dark .bg-gray-800, .dark .bg-gray-900, .dark .bg-gray-950 {
+      background-color: var(--jarvis-bg) !important;
+    }
     #sidebar .font-medium,
     aside .font-medium,
     aside .self-center {
@@ -58,25 +66,16 @@ data:
       font-size: 12px !important;
       font-weight: 600 !important;
     }
-    /* hide the OI mark next to the name (first small img/svg in brand row) */
-    #sidebar a img,
-    aside a img,
-    #sidebar a svg,
-    aside > div:first-child img {
+    #sidebar a img, aside a img, #sidebar a svg {
       display: none !important;
     }
     a[href*="openwebui.com"],
     a[href*="github.com/open-webui"] {
       display: none !important;
     }
-    /* nav rows */
-    #sidebar button, aside button, #sidebar a {
-      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
-      font-size: 12px;
-    }
     ::-webkit-scrollbar { width: 8px; height: 8px; }
-    ::-webkit-scrollbar-thumb { background: rgba(94, 234, 212, 0.28); border-radius: 0; }
-    ::-webkit-scrollbar-track { background: #07090b; }
+    ::-webkit-scrollbar-thumb { background: rgba(94, 234, 212, 0.35); }
+    ::-webkit-scrollbar-track { background: var(--jarvis-bg); }
     textarea { caret-color: var(--jarvis-cyan); }
   jarvis-hud.js: |
     (function () {
@@ -120,7 +119,7 @@ data:
         t = block + t
     t = t.replace("<title>Open WebUI</title>", "<title>JARVIS</title>")
     p.write_text(t)
-    print("hud v3 injected css", len(css), "js", len(js), flush=True)
+    print("hud v4 injected", len(css), len(js), flush=True)
     HUDPY
     for s in /app/backend/start.sh /app/start.sh start.sh; do
       if [ -f "$s" ]; then exec bash "$s"; fi
