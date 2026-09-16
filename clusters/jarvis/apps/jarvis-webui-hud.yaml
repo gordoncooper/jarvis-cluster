@@ -4,10 +4,10 @@ metadata:
   name: jarvis-webui-hud
   namespace: apps
   annotations:
-    jarvis.hud: "v4 generic html/body/#app — re-check after open-webui image bumps"
+    jarvis.hud: "v5 vignette + grid heartbeat — generic html/body/#app"
 data:
   jarvis-hud.css: |
-    /* JARVIS HUD v4 — generic hooks (html/body/#app/aside). Composer/mic layout untouched. */
+    /* JARVIS HUD v5 — vignette + slow heartbeat on the grid overlay only. */
     :root {
       --jarvis-bg: #07090b;
       --jarvis-panel: #0b1014;
@@ -37,12 +37,24 @@ data:
       inset: 0;
       pointer-events: none;
       z-index: 0;
-      opacity: 1;
-      background-color: var(--jarvis-bg);
+      background-color: transparent;
       background-image:
-        linear-gradient(rgba(94, 234, 212, 0.16) 1px, transparent 1px),
-        linear-gradient(90deg, rgba(94, 234, 212, 0.16) 1px, transparent 1px);
+        linear-gradient(rgba(94, 234, 212, 0.18) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(94, 234, 212, 0.18) 1px, transparent 1px);
       background-size: 28px 28px;
+      -webkit-mask-image: radial-gradient(ellipse 70% 58% at 58% 42%, #000 0%, #000 32%, rgba(0,0,0,0.55) 58%, transparent 82%);
+      mask-image: radial-gradient(ellipse 70% 58% at 58% 42%, #000 0%, #000 32%, rgba(0,0,0,0.55) 58%, transparent 82%);
+      animation: jarvis-grid-pulse 5.5s ease-in-out infinite;
+    }
+    @keyframes jarvis-grid-pulse {
+      0%, 100% { opacity: 0.42; }
+      10% { opacity: 0.95; }
+      22% { opacity: 0.48; }
+      34% { opacity: 0.82; }
+      48% { opacity: 0.42; }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      body::after { animation: none; opacity: 0.7; }
     }
     #app, main, #sidebar, aside { position: relative; z-index: 1; }
     #sidebar, aside {
@@ -119,7 +131,7 @@ data:
         t = block + t
     t = t.replace("<title>Open WebUI</title>", "<title>JARVIS</title>")
     p.write_text(t)
-    print("hud v4 injected", len(css), len(js), flush=True)
+    print("hud v5 injected", len(css), len(js), flush=True)
     HUDPY
     for s in /app/backend/start.sh /app/start.sh start.sh; do
       if [ -f "$s" ]; then exec bash "$s"; fi
