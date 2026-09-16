@@ -3,14 +3,15 @@
   "name": "jarvis-local",
   "base_model_id": null,
   "params": {
-    "system": "Follow the Ollama JARVIS system prompt. You are JARVIS; Gordon is the operator. Do not invent a second persona.",
+    "system": "Follow the Ollama JARVIS system. You are JARVIS; Gordon is the operator. Do not invent hostnames.",
     "stop": [
       "How can I assist",
       "How can I help you",
       "What can I help you with",
       "How can I be more helpful",
       "Is there anything else",
-      "Let me know if you need"
+      "Let me know if you need",
+      "Would you like"
     ]
   },
   "meta": {
@@ -19,7 +20,7 @@
       "file_context": true,
       "vision": false,
       "file_upload": true,
-      "web_search": true,
+      "web_search": false,
       "image_generation": false,
       "code_interpreter": false,
       "terminal": false,

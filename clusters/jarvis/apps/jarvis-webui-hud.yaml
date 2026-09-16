@@ -182,130 +182,16 @@ data:
           if (chip) return chip;
           chip = document.createElement("div");
           chip.id = "jarvis-route-chip";
-          chip.textContent = "ROUTED · —";
+          chip.textContent = "/* no chip */ · —";
           (document.body || document.documentElement).appendChild(chip);
           return chip;
         }
         function setChip(kind, label) {
           var chip = ensure();
           chip.setAttribute("data-kind", kind);
-          chip.textContent = "ROUTED · " + label;
+          chip.textContent = "/* no chip */ · " + label;
         }
-        function pending() { setChip("wait", "…"); }
-        function scrapeRaw(text) {
-          if (!text) return;
-          var s = typeof text === "string" ? text : "";
-          if (!s && text && text.data) s = String(text.data);
-          if (!s) return;
-          if (/chatcmpl-jarvis-hands|jarvis-hands|"model"\s*:\s*"openclaw"/i.test(s)) {
-            setChip("hands", "HANDS  jarvis-hands"); return;
-          }
-          if (/grok-build-0\.1|jarvis-grok-code|grok-code-fast/i.test(s)) {
-            setChip("grok", "GROK-CODE"); return;
-          }
-          if (/ollama\/jarvis|jarvis-local/i.test(s)) {
-            setChip("local", "LOCAL  ollama/jarvis"); return;
-          }
-          if (/"model"\s*:\s*"jarvis-grok"/i.test(s)) {
-            setChip("grok", "GROK"); return;
-          }
-        }
-        function watchUrl(url) { return /api|socket|ws/i.test(String(url || "")); }
-        document.addEventListener("keydown", function (e) {
-          if (e.key !== "Enter" || e.shiftKey) return;
-          var t = e.target;
-          if (!t || (t.tagName !== "TEXTAREA" && t.getAttribute("contenteditable") !== "true")) return;
-          pending();
-        }, true);
-        function hookFetch() {
-          var orig = window.fetch;
-          if (!orig || orig.__jarvisChip3) return;
-          function wrapped(input, init) {
-            var url = typeof input === "string" ? input : (input && input.url) || "";
-            if (watchUrl(url)) pending();
-            return orig.apply(this, arguments).then(function (res) {
-              try {
-                var c = res.clone();
-                if (c.body && c.body.getReader) {
-                  var reader = c.body.getReader();
-                  var dec = new TextDecoder();
-                  var acc = "";
-                  function pump() {
-                    return reader.read().then(function (r) {
-                      if (r.value) acc += dec.decode(r.value, {stream: true});
-                      scrapeRaw(acc);
-                      if (!r.done) return pump();
-                    });
-                  }
-                  pump().catch(function () {});
-                } else {
-                  c.text().then(scrapeRaw).catch(function () {});
-                }
-              } catch (e) {}
-              return res;
-            });
-          }
-          wrapped.__jarvisChip3 = true;
-          window.fetch = wrapped;
-        }
-        function hookXHR() {
-          var XHR = XMLHttpRequest.prototype;
-          if (XHR.__jarvisChip3) return;
-          var _open = XHR.open, _send = XHR.send;
-          XHR.open = function (m, u) { this.__jarvisUrl = u; return _open.apply(this, arguments); };
-          XHR.send = function () {
-            this.addEventListener("progress", function () { scrapeRaw(this.responseText || ""); });
-            this.addEventListener("load", function () { scrapeRaw(this.responseText || ""); });
-            return _send.apply(this, arguments);
-          };
-          XHR.__jarvisChip3 = true;
-        }
-        function hookWS() {
-          var WS = window.WebSocket;
-          if (!WS || WS.__jarvisChip3) return;
-          function Wrap(url, proto) {
-            var ws = proto !== undefined ? new WS(url, proto) : new WS(url);
-            ws.addEventListener("message", function (ev) { scrapeRaw(ev && ev.data); });
-            return ws;
-          }
-          Wrap.prototype = WS.prototype;
-          Wrap.CONNECTING = WS.CONNECTING; Wrap.OPEN = WS.OPEN;
-          Wrap.CLOSING = WS.CLOSING; Wrap.CLOSED = WS.CLOSED;
-          Wrap.__jarvisChip3 = true;
-          window.WebSocket = Wrap;
-        }
-        function hookET() {
-          var proto = EventTarget.prototype;
-          if (proto.__jarvisChip3) return;
-          var ae = proto.addEventListener;
-          proto.addEventListener = function (type, fn, opt) {
-            if (type === "message" && typeof fn === "function") {
-              var wrapped = function (ev) {
-                try { scrapeRaw(ev && ev.data); } catch (e) {}
-                return fn.apply(this, arguments);
-              };
-              return ae.call(this, type, wrapped, opt);
-            }
-            return ae.call(this, type, fn, opt);
-          };
-          proto.__jarvisChip3 = true;
-        }
-        hookET();
-        hookFetch();
-        hookXHR();
-        hookWS();
-        setInterval(function () { hookFetch(); hookXHR(); hookWS(); }, 2000);
-        function pollMark() {
-          try {
-            var s = (document.body && document.body.textContent) || "";
-            if (s.indexOf("⟦H⟧") >= 0) setChip("hands", "HANDS  jarvis-hands");
-            else if (s.indexOf("⟦C⟧") >= 0) setChip("grok", "GROK-CODE");
-            else if (s.indexOf("⟦G⟧") >= 0) setChip("grok", "GROK");
-            else if (s.indexOf("⟦L⟧") >= 0) setChip("local", "LOCAL  ollama/jarvis");
-            else scrapeRaw(s);
-          } catch (e) {}
-        }
-        setInterval(pollMark, 400);
+        /* chip removed */
         ensure();
       })();
 
