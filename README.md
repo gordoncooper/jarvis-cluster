@@ -1,5 +1,7 @@
 # JARVIS home cluster
 
+**Frozen glass (v0.4.30):** do not retune LiteLLM `keyword_tier_rules`, `jarvis-system-prompt.txt`, or HUD CSS unless chat.lan regresses. Inspect → `jarvis-hands`; talk → 7B; YAML → grok-code.
+
 Flux YAML for a six-node k3s inference lab. **Gitea is origin.** This GitHub
 repo is a **mirror**. Do not point Flux at GitHub.
 
