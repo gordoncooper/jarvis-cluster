@@ -191,3 +191,5 @@ Canonical operator docs live in **jarvis-infra**:
 
 Scripts (`check-contract.sh`, `verify-jarvis.sh`, backup, reboot, smoke)
 live in `~/jarvis-infra/scripts/`. This repo is Flux YAML only.
+
+`clusters/jarvis/apps/jarvis-webui-hud.yaml` is the chat.lan HUD (CSS/JS inject). Do not point this repo at GitHub for Flux.
