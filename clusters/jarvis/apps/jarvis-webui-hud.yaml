@@ -4,10 +4,10 @@ metadata:
   name: jarvis-webui-hud
   namespace: apps
   annotations:
-    jarvis.hud: "v6 wordmark + live pip — generic html/body/#app/aside"
+    jarvis.hud: "v7 wordmark keys off text JARVIS not Tailwind classes"
 data:
   jarvis-hud.css: |
-    /* JARVIS HUD v6 — bigger wordmark, live pip, inner vignette. Grid heartbeat unchanged. */
+    /* JARVIS HUD v7 — wordmark via [data-jarvis-mark] (JS finds the JARVIS text). */
     :root {
       --jarvis-bg: #07090b;
       --jarvis-panel: #0b1014;
@@ -15,9 +15,7 @@ data:
       --jarvis-text: #d5e6ea;
       --jarvis-line: rgba(94, 234, 212, 0.32);
     }
-    html, body, #app,
-    #app > div,
-    main {
+    html, body, #app, #app > div, main {
       background-color: var(--jarvis-bg) !important;
       color: var(--jarvis-text);
       background-image: none !important;
@@ -53,13 +51,12 @@ data:
       48% { opacity: 0.42; }
     }
     @keyframes jarvis-live {
-      0%, 100% { opacity: 0.45; box-shadow: 0 0 4px var(--jarvis-cyan); }
-      50% { opacity: 1; box-shadow: 0 0 10px var(--jarvis-cyan); }
+      0%, 100% { opacity: 0.4; }
+      50% { opacity: 1; }
     }
     @media (prefers-reduced-motion: reduce) {
       body::after { animation: none; opacity: 0.7; }
-      aside .self-center.font-medium::before,
-      #sidebar .self-center.font-medium::before { animation: none; }
+      [data-jarvis-mark]::before { animation: none; }
     }
     #app, main, #sidebar, aside { position: relative; z-index: 1; }
     #app { box-shadow: inset 0 0 120px rgba(0, 0, 0, 0.55); }
@@ -74,49 +71,34 @@ data:
     .dark .bg-gray-800, .dark .bg-gray-900, .dark .bg-gray-950 {
       background-color: var(--jarvis-bg) !important;
     }
-    #sidebar .font-medium,
-    aside .font-medium {
-      color: var(--jarvis-cyan) !important;
-      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace !important;
-    }
-    aside .self-center.font-medium,
-    #sidebar .self-center.font-medium,
-    aside .self-center {
+    [data-jarvis-mark] {
       font-size: 22px !important;
       font-weight: 700 !important;
-      letter-spacing: 0.34em !important;
+      letter-spacing: 0.32em !important;
       text-transform: uppercase !important;
-      line-height: 1.15 !important;
-      text-shadow: 0 0 16px rgba(94, 234, 212, 0.55), 0 0 2px var(--jarvis-cyan);
-      padding: 10px 4px 8px 0 !important;
-      border-bottom: 1px solid var(--jarvis-line);
+      color: var(--jarvis-cyan) !important;
+      text-shadow: 0 0 16px rgba(94, 234, 212, 0.55), 0 0 2px var(--jarvis-cyan) !important;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace !important;
+      line-height: 1.2 !important;
+      padding: 10px 0 8px 0 !important;
+      border-bottom: 1px solid var(--jarvis-line) !important;
+      display: inline-block !important;
     }
-    aside .self-center.font-medium::before,
-    #sidebar .self-center.font-medium::before,
-    aside .self-center::before {
+    [data-jarvis-mark]::before {
       content: "";
       display: inline-block;
       width: 8px;
       height: 8px;
       margin-right: 10px;
-      margin-bottom: 2px;
       background: var(--jarvis-cyan);
-      box-shadow: 0 0 8px var(--jarvis-cyan);
+      box-shadow: 0 0 10px var(--jarvis-cyan);
       animation: jarvis-live 2.4s ease-in-out infinite;
       vertical-align: middle;
     }
-    #sidebar a img, aside a img, #sidebar a svg {
-      display: none !important;
-    }
-    a[href*="openwebui.com"],
-    a[href*="github.com/open-webui"] {
-      display: none !important;
-    }
-    textarea {
-      caret-color: var(--jarvis-cyan);
-      box-shadow: 0 0 0 1px var(--jarvis-line);
-    }
-    ::-webkit-scrollbar { width: 8px; height: 8px; }
+    #sidebar a img, aside a img, #sidebar a svg { display: none !important; }
+    a[href*="openwebui.com"], a[href*="github.com/open-webui"] { display: none !important; }
+    textarea { caret-color: var(--jarvis-cyan); }
+    ::-webkit-scrollbar { width: 8px; }
     ::-webkit-scrollbar-thumb { background: rgba(94, 234, 212, 0.35); }
     ::-webkit-scrollbar-track { background: var(--jarvis-bg); }
   jarvis-hud.js: |
@@ -124,19 +106,28 @@ data:
       function once() {
         try {
           document.title = "JARVIS";
-          var nodes = document.querySelectorAll("aside *, #sidebar *");
-          for (var i = 0; i < nodes.length; i++) {
-            var el = nodes[i];
-            if (el.childNodes.length !== 1 || el.childNodes[0].nodeType !== 3) continue;
-            var t = el.childNodes[0].nodeValue;
-            if (t && t.indexOf("(Open WebUI)") !== -1) {
-              el.childNodes[0].nodeValue = t.replace(/\s*\(Open WebUI\)/g, "");
+          var roots = document.querySelectorAll("aside, #sidebar");
+          for (var r = 0; r < roots.length; r++) {
+            var nodes = roots[r].querySelectorAll("*");
+            for (var i = 0; i < nodes.length; i++) {
+              var el = nodes[i];
+              if (el.childNodes.length !== 1 || el.childNodes[0].nodeType !== 3) continue;
+              var raw = el.childNodes[0].nodeValue;
+              if (!raw) continue;
+              if (raw.indexOf("(Open WebUI)") !== -1) {
+                el.childNodes[0].nodeValue = raw.replace(/\s*\(Open WebUI\)/g, "");
+                raw = el.childNodes[0].nodeValue;
+              }
+              if (raw.trim() === "JARVIS") {
+                el.setAttribute("data-jarvis-mark", "1");
+              }
             }
           }
         } catch (e) {}
       }
-      setTimeout(once, 400);
-      setTimeout(once, 1600);
+      setTimeout(once, 300);
+      setTimeout(once, 1200);
+      setTimeout(once, 2500);
     })();
   inject-hud.sh: |
     #!/bin/bash
@@ -161,7 +152,7 @@ data:
         t = block + t
     t = t.replace("<title>Open WebUI</title>", "<title>JARVIS</title>")
     p.write_text(t)
-    print("hud v6 injected", len(css), len(js), flush=True)
+    print("hud v7 injected", len(css), len(js), flush=True)
     HUDPY
     for s in /app/backend/start.sh /app/start.sh start.sh; do
       if [ -f "$s" ]; then exec bash "$s"; fi
