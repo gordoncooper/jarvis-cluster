@@ -48,11 +48,11 @@ class H(BaseHTTPRequestHandler):
     def log_message(self, fmt, *args):
         print("[shim]", args[0] if args else fmt)
 
-    def _send(self, code, obj, ctype="application/json"):
-        b = obj if isinstance(obj, bytes) else json.dumps(obj).encode()
+    def _send(self, code, obj):
+        b = json.dumps(obj).encode()
         try:
             self.send_response(code)
-            self.send_header("Content-Type", ctype)
+            self.send_header("Content-Type", "application/json")
             self.send_header("Content-Length", str(len(b)))
             self.end_headers()
             self.wfile.write(b)
@@ -64,10 +64,7 @@ class H(BaseHTTPRequestHandler):
         if path in ("/health", "/healthz"):
             return self._send(200, {"ok": True})
         if path in ("/v1/models", "/models"):
-            return self._send(
-                200,
-                {"object": "list", "data": [{"id": "openclaw", "object": "model"}]},
-            )
+            return self._send(200, {"object": "list", "data": [{"id": "openclaw", "object": "model"}]})
         return self._send(404, {"error": "not found"})
 
     def do_POST(self):
@@ -80,32 +77,52 @@ class H(BaseHTTPRequestHandler):
             return self._send(400, {"error": "bad json"})
         if path not in ("/v1/chat/completions", "/chat/completions"):
             return self._send(404, {"error": "not found"})
+        stream = bool(body.get("stream"))
+        if stream:
+            try:
+                self.send_response(200)
+                self.send_header("Content-Type", "text/event-stream")
+                self.send_header("Cache-Control", "no-cache")
+                self.send_header("X-Accel-Buffering", "no")
+                self.end_headers()
+                pre = {
+                    "id": "chatcmpl-jarvis-hands",
+                    "object": "chat.completion.chunk",
+                    "model": "jarvis-hands",
+                    "choices": [{"index": 0, "delta": {"role": "assistant"}, "finish_reason": None}],
+                }
+                self.wfile.write(b"data: " + json.dumps(pre).encode() + b"\n\n")
+                self.wfile.flush()
+            except BrokenPipeError:
+                return
         try:
             text = run_agent(last_user(body))
         except Exception:
             text = "shim error: " + traceback.format_exc()[-800:]
-        if body.get("stream"):
+        if stream:
             chunk = {
                 "id": "chatcmpl-jarvis-hands",
                 "object": "chat.completion.chunk",
                 "model": "jarvis-hands",
                 "choices": [{"index": 0, "delta": {"content": text}, "finish_reason": "stop"}],
             }
-            payload = b"data: " + json.dumps(chunk).encode() + b"\n\ndata: [DONE]\n\n"
-            return self._send(200, payload, "text/event-stream")
-        return self._send(
-            200,
-            {
-                "id": "chatcmpl-jarvis-hands",
-                "object": "chat.completion",
-                "model": "jarvis-hands",
-                "choices": [{
-                    "index": 0,
-                    "message": {"role": "assistant", "content": text},
-                    "finish_reason": "stop",
-                }],
-            },
-        )
+            try:
+                self.wfile.write(b"data: " + json.dumps(chunk).encode() + b"\n\n")
+                self.wfile.write(b"data: [DONE]\n\n")
+                self.wfile.flush()
+            except BrokenPipeError:
+                pass
+            return
+        return self._send(200, {
+            "id": "chatcmpl-jarvis-hands",
+            "object": "chat.completion",
+            "model": "jarvis-hands",
+            "choices": [{
+                "index": 0,
+                "message": {"role": "assistant", "content": text},
+                "finish_reason": "stop",
+            }],
+        })
 
 
 if __name__ == "__main__":
