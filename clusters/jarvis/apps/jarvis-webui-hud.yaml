@@ -5,17 +5,14 @@ metadata:
   namespace: apps
 data:
   jarvis-hud.css: |
-    /* JARVIS HUD v2 — Open WebUI 0.11.3. Composer/mic/TTS untouched. */
+    /* JARVIS HUD — CSS only. No MutationObserver. */
     :root {
       --jarvis-bg: #07090b;
       --jarvis-panel: #0b1014;
       --jarvis-cyan: #5eead4;
-      --jarvis-text: #d5e6ea;
       --jarvis-line: rgba(94, 234, 212, 0.28);
     }
-    html, body, #app {
-      background: var(--jarvis-bg) !important;
-    }
+    html, body, #app { background: var(--jarvis-bg) !important; }
     body::before {
       content: "";
       position: fixed;
@@ -25,33 +22,11 @@ data:
       z-index: 9999;
       pointer-events: none;
     }
-    #sidebar,
-    aside {
+    #sidebar, aside {
       background: var(--jarvis-panel) !important;
       box-shadow: inset 3px 0 0 var(--jarvis-cyan) !important;
       border-right: 1px solid var(--jarvis-line) !important;
     }
-  jarvis-hud.js: |
-    (function () {
-      function strip(s) {
-        return String(s || "")
-          .replace(/\s*\(Open WebUI\)/g, "")
-          .replace(/^Open WebUI$/, "JARVIS");
-      }
-      function walk(root) {
-        document.title = strip(document.title) || "JARVIS";
-        var w = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, null);
-        var n;
-        while ((n = w.nextNode())) {
-          if (n.nodeValue && n.nodeValue.indexOf("Open WebUI") !== -1) {
-            n.nodeValue = strip(n.nodeValue);
-          }
-        }
-      }
-      walk(document);
-      new MutationObserver(function () { walk(document.body || document); })
-        .observe(document.documentElement, { childList: true, subtree: true, characterData: true });
-    })();
   inject-hud.sh: |
     #!/bin/bash
     set -euo pipefail
@@ -59,29 +34,20 @@ data:
     from pathlib import Path
     import re
     css = Path("/hud/jarvis-hud.css").read_text()
-    js = Path("/hud/jarvis-hud.js").read_text()
     p = Path("/app/build/index.html")
     t = p.read_text()
     t = re.sub(r"<!--jarvis-hud-->.*?<!--/jarvis-hud-->", "", t, flags=re.S)
-    block = (
-        "<!--jarvis-hud-->"
-        "<style id=\"jarvis-hud\">" + css + "</style>"
-        "<script id=\"jarvis-hud-js\">" + js + "</script>"
-        "<!--/jarvis-hud-->"
-    )
+    block = "<!--jarvis-hud--><style id=\"jarvis-hud\">" + css + "</style><!--/jarvis-hud-->"
     if "</head>" in t:
         t = t.replace("</head>", block + "\n</head>", 1)
     else:
         t = block + t
     t = t.replace("<title>Open WebUI</title>", "<title>JARVIS</title>")
     p.write_text(t)
-    print("hud v2 injected", "css", len(css), "js", len(js), flush=True)
+    print("hud css-only injected", len(css), flush=True)
     HUDPY
     for s in /app/backend/start.sh /app/start.sh start.sh; do
-      if [ -f "$s" ]; then
-        echo "exec $s" >&2
-        exec bash "$s"
-      fi
+      if [ -f "$s" ]; then exec bash "$s"; fi
     done
     echo "FATAL: no start.sh" >&2
     exit 1
