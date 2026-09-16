@@ -5,28 +5,98 @@ metadata:
   namespace: apps
 data:
   jarvis-hud.css: |
-    /* JARVIS HUD — CSS only. No MutationObserver. */
+    /* JARVIS HUD v3 — Open WebUI 0.11.3. Mic/TTS/composer layout untouched. */
     :root {
       --jarvis-bg: #07090b;
       --jarvis-panel: #0b1014;
       --jarvis-cyan: #5eead4;
-      --jarvis-line: rgba(94, 234, 212, 0.28);
+      --jarvis-text: #d5e6ea;
+      --jarvis-dim: #7d939c;
+      --jarvis-line: rgba(94, 234, 212, 0.32);
     }
-    html, body, #app { background: var(--jarvis-bg) !important; }
+    html, body, #app {
+      background-color: var(--jarvis-bg) !important;
+      color: var(--jarvis-text);
+    }
     body::before {
       content: "";
       position: fixed;
       top: 0; left: 0; right: 0;
       height: 2px;
-      background: linear-gradient(90deg, var(--jarvis-cyan), transparent 65%);
+      background: linear-gradient(90deg, var(--jarvis-cyan) 0%, var(--jarvis-cyan) 18%, transparent 70%);
       z-index: 9999;
       pointer-events: none;
+    }
+    body::after {
+      content: "";
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      z-index: 0;
+      opacity: 0.22;
+      background-image:
+        linear-gradient(rgba(94, 234, 212, 0.07) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(94, 234, 212, 0.07) 1px, transparent 1px);
+      background-size: 40px 40px;
+      mask-image: radial-gradient(ellipse at 50% 20%, #000 30%, transparent 75%);
     }
     #sidebar, aside {
       background: var(--jarvis-panel) !important;
       box-shadow: inset 3px 0 0 var(--jarvis-cyan) !important;
       border-right: 1px solid var(--jarvis-line) !important;
+      position: relative;
+      z-index: 1;
     }
+    /* brand */
+    #sidebar .font-medium,
+    aside .font-medium,
+    aside .self-center {
+      color: var(--jarvis-cyan) !important;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace !important;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+      font-size: 12px !important;
+      font-weight: 600 !important;
+    }
+    /* hide the OI mark next to the name (first small img/svg in brand row) */
+    #sidebar a img,
+    aside a img,
+    #sidebar a svg,
+    aside > div:first-child img {
+      display: none !important;
+    }
+    a[href*="openwebui.com"],
+    a[href*="github.com/open-webui"] {
+      display: none !important;
+    }
+    /* nav rows */
+    #sidebar button, aside button, #sidebar a {
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      font-size: 12px;
+    }
+    ::-webkit-scrollbar { width: 8px; height: 8px; }
+    ::-webkit-scrollbar-thumb { background: rgba(94, 234, 212, 0.28); border-radius: 0; }
+    ::-webkit-scrollbar-track { background: #07090b; }
+    textarea { caret-color: var(--jarvis-cyan); }
+  jarvis-hud.js: |
+    (function () {
+      function once() {
+        try {
+          document.title = "JARVIS";
+          var nodes = document.querySelectorAll("aside *, #sidebar *");
+          for (var i = 0; i < nodes.length; i++) {
+            var el = nodes[i];
+            if (el.childNodes.length !== 1 || el.childNodes[0].nodeType !== 3) continue;
+            var t = el.childNodes[0].nodeValue;
+            if (t && t.indexOf("(Open WebUI)") !== -1) {
+              el.childNodes[0].nodeValue = t.replace(/\s*\(Open WebUI\)/g, "");
+            }
+          }
+        } catch (e) {}
+      }
+      setTimeout(once, 400);
+      setTimeout(once, 1600);
+    })();
   inject-hud.sh: |
     #!/bin/bash
     set -euo pipefail
@@ -34,17 +104,23 @@ data:
     from pathlib import Path
     import re
     css = Path("/hud/jarvis-hud.css").read_text()
+    js = Path("/hud/jarvis-hud.js").read_text()
     p = Path("/app/build/index.html")
     t = p.read_text()
     t = re.sub(r"<!--jarvis-hud-->.*?<!--/jarvis-hud-->", "", t, flags=re.S)
-    block = "<!--jarvis-hud--><style id=\"jarvis-hud\">" + css + "</style><!--/jarvis-hud-->"
+    block = (
+        "<!--jarvis-hud-->"
+        "<style id=\"jarvis-hud\">" + css + "</style>"
+        "<script id=\"jarvis-hud-js\">" + js + "</script>"
+        "<!--/jarvis-hud-->"
+    )
     if "</head>" in t:
         t = t.replace("</head>", block + "\n</head>", 1)
     else:
         t = block + t
     t = t.replace("<title>Open WebUI</title>", "<title>JARVIS</title>")
     p.write_text(t)
-    print("hud css-only injected", len(css), flush=True)
+    print("hud v3 injected css", len(css), "js", len(js), flush=True)
     HUDPY
     for s in /app/backend/start.sh /app/start.sh start.sh; do
       if [ -f "$s" ]; then exec bash "$s"; fi
