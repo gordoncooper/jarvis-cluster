@@ -4,10 +4,10 @@ metadata:
   name: jarvis-webui-hud
   namespace: apps
   annotations:
-    jarvis.hud: "v7 wordmark keys off text JARVIS not Tailwind classes"
+    jarvis.hud: "v8 wordmark on sidebar toggle; model HUD; childList observer only"
 data:
   jarvis-hud.css: |
-    /* JARVIS HUD v7 — wordmark via [data-jarvis-mark] (JS finds the JARVIS text). */
+    /* JARVIS HUD v8 — wordmark survives sidebar toggle; model name HUD. */
     :root {
       --jarvis-bg: #07090b;
       --jarvis-panel: #0b1014;
@@ -95,6 +95,16 @@ data:
       animation: jarvis-live 2.4s ease-in-out infinite;
       vertical-align: middle;
     }
+    [data-jarvis-model] {
+      font-size: 20px !important;
+      font-weight: 600 !important;
+      letter-spacing: 0.22em !important;
+      text-transform: uppercase !important;
+      color: var(--jarvis-cyan) !important;
+      text-shadow: 0 0 14px rgba(94, 234, 212, 0.45);
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace !important;
+    }
+    [data-jarvis-foot] { display: none !important; }
     #sidebar a img, aside a img, #sidebar a svg { display: none !important; }
     a[href*="openwebui.com"], a[href*="github.com/open-webui"] { display: none !important; }
     textarea { caret-color: var(--jarvis-cyan); }
@@ -107,31 +117,56 @@ data:
         localStorage.setItem("sidebar", "false");
         localStorage.setItem("showSidebar", "false");
       } catch (e) {}
+    
       function once() {
         try {
           document.title = "JARVIS";
-          var roots = document.querySelectorAll("aside, #sidebar");
-          for (var r = 0; r < roots.length; r++) {
-            var nodes = roots[r].querySelectorAll("*");
-            for (var i = 0; i < nodes.length; i++) {
-              var el = nodes[i];
-              if (el.childNodes.length !== 1 || el.childNodes[0].nodeType !== 3) continue;
-              var raw = el.childNodes[0].nodeValue;
-              if (!raw) continue;
-              if (raw.indexOf("(Open WebUI)") !== -1) {
-                el.childNodes[0].nodeValue = raw.replace(/\s*\(Open WebUI\)/g, "");
-                raw = el.childNodes[0].nodeValue;
-              }
-              if (raw.trim() === "JARVIS") {
-                el.setAttribute("data-jarvis-mark", "1");
+          var nodes = document.querySelectorAll("aside *, #sidebar *, main *, #app *");
+          for (var i = 0; i < nodes.length; i++) {
+            var el = nodes[i];
+            if (el.childNodes.length !== 1 || el.childNodes[0].nodeType !== 3) continue;
+            var raw = el.childNodes[0].nodeValue;
+            if (!raw) continue;
+            var trimmed = raw.trim();
+            if (trimmed.indexOf("(Open WebUI)") !== -1 && trimmed.indexOf("v0.") !== -1) {
+              el.setAttribute("data-jarvis-foot", "1");
+              continue;
+            }
+            if (raw.indexOf("(Open WebUI)") !== -1) {
+              el.childNodes[0].nodeValue = raw.replace(/\s*\(Open WebUI\)/g, "");
+              trimmed = el.childNodes[0].nodeValue.trim();
+            }
+            if (trimmed === "JARVIS") {
+              el.setAttribute("data-jarvis-mark", "1");
+            }
+            if (trimmed === "jarvis-local") {
+              el.setAttribute("data-jarvis-model", "1");
+              var p = el.parentElement;
+              if (p) {
+                var hide = p.querySelectorAll("img, svg");
+                for (var h = 0; h < hide.length; h++) hide[h].style.display = "none";
               }
             }
           }
         } catch (e) {}
       }
-      setTimeout(once, 300);
-      setTimeout(once, 1200);
-      setTimeout(once, 2500);
+    
+      var pending = null;
+      function schedule() {
+        if (pending) return;
+        pending = setTimeout(function () {
+          pending = null;
+          once();
+        }, 250);
+      }
+    
+      once();
+      setTimeout(once, 400);
+      setTimeout(once, 1500);
+    
+      var root = document.documentElement;
+      var obs = new MutationObserver(schedule);
+      obs.observe(root, { childList: true, subtree: true });
     })();
   inject-hud.sh: |
     #!/bin/bash
@@ -156,7 +191,7 @@ data:
         t = block + t
     t = t.replace("<title>Open WebUI</title>", "<title>JARVIS</title>")
     p.write_text(t)
-    print("hud v7 injected", len(css), len(js), flush=True)
+    print("hud v8 injected", len(css), len(js), flush=True)
     HUDPY
     for s in /app/backend/start.sh /app/start.sh start.sh; do
       if [ -f "$s" ]; then exec bash "$s"; fi
