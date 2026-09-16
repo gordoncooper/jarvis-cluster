@@ -35,6 +35,9 @@ spec:
               mountPath: /app/voices
             - name: config
               mountPath: /app/config
+            - name: voice-map
+              mountPath: /app/config/voice_to_speaker.yaml
+              subPath: voice_to_speaker.yaml
           readinessProbe:
             tcpSocket:
               port: http
@@ -53,6 +56,9 @@ spec:
             type: DirectoryOrCreate
         - name: config
           emptyDir: {}
+        - name: voice-map
+          configMap:
+            name: piper-voice-map
 ---
 apiVersion: v1
 kind: Service

@@ -1,0 +1,45 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: piper-voice-map
+  namespace: apps
+data:
+  voice_to_speaker.yaml: |
+    tts-1:
+      alloy:
+        model: voices/en_GB-northern_english_male-medium.onnx
+        speaker:
+      echo:
+        model: voices/en_US-libritts_r-medium.onnx
+        speaker:
+      fable:
+        model: voices/en_GB-northern_english_male-medium.onnx
+        speaker:
+      onyx:
+        model: voices/en_GB-northern_english_male-medium.onnx
+        speaker:
+      nova:
+        model: voices/en_US-libritts_r-medium.onnx
+        speaker:
+      shimmer:
+        model: voices/en_US-libritts_r-medium.onnx
+        speaker:
+    tts-1-hd:
+      alloy:
+        model: voices/en_GB-northern_english_male-medium.onnx
+        speaker:
+      echo:
+        model: voices/en_US-libritts_r-medium.onnx
+        speaker:
+      fable:
+        model: voices/en_GB-northern_english_male-medium.onnx
+        speaker:
+      onyx:
+        model: voices/en_GB-northern_english_male-medium.onnx
+        speaker:
+      nova:
+        model: voices/en_US-libritts_r-medium.onnx
+        speaker:
+      shimmer:
+        model: voices/en_US-libritts_r-medium.onnx
+        speaker:
