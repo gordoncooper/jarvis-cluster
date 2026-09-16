@@ -4,7 +4,7 @@ metadata:
   name: jarvis-webui-hud
   namespace: apps
   annotations:
-    jarvis.hud: "v9 routed-model chip (fetch hook, no extra observer)"
+    jarvis.hud: "v9b ROUTED chip predicts from prompt (same keywords as LiteLLM)"
 data:
   jarvis-hud.css: |
     /* JARVIS HUD v8 — wordmark survives sidebar toggle; model name HUD. */
@@ -150,63 +150,84 @@ data:
     (function () {
 
       (function routeChip() {
-        var chip = document.getElementById("jarvis-route-chip");
-        if (!chip) {
+        function ensure() {
+          var chip = document.getElementById("jarvis-route-chip");
+          if (chip) return chip;
           chip = document.createElement("div");
           chip.id = "jarvis-route-chip";
           chip.textContent = "ROUTED · —";
           (document.body || document.documentElement).appendChild(chip);
+          return chip;
         }
-        function pretty(m) {
-          var s = String(m || "");
-          var l = s.toLowerCase();
-          var kind = "local";
-          var label = s;
-          if (l.indexOf("code") >= 0 || l.indexOf("grok-build") >= 0) { kind = "grok"; label = "GROK-CODE  " + s; }
-          else if (l.indexOf("grok") >= 0) { kind = "grok"; label = "GROK  " + s; }
-          else if (l.indexOf("ollama") >= 0 || l === "jarvis-local") { kind = "local"; label = "LOCAL  " + s; }
+        function setChip(kind, label) {
+          var chip = ensure();
           chip.setAttribute("data-kind", kind);
           chip.textContent = "ROUTED · " + label;
         }
-        function scrape(text) {
-          var re = /"model"\s*:\s*"([^"]+)"/g;
-          var last = null, x;
+        var GROK = ["flux", "kustomization", "helm upgrade", "git commit", "write yaml", "patch deployment", "crashloop", "delete pod"];
+        function predict(text) {
+          var l = String(text || "").toLowerCase();
+          if (!l.trim()) return;
+          for (var i = 0; i < GROK.length; i++) {
+            if (l.indexOf(GROK[i]) >= 0) {
+              setChip("grok", "GROK-CODE");
+              return;
+            }
+          }
+          setChip("local", "LOCAL  ollama/jarvis");
+        }
+        function scrapeRaw(text) {
+          var re = /"model"\s*:\s*"([^"]+)"/g, last = null, x;
           while ((x = re.exec(text))) last = x[1];
-          if (last && last !== "jarvis") pretty(last);
+          if (!last || last === "jarvis") return;
+          var l = last.toLowerCase();
+          if (l.indexOf("code") >= 0 || l.indexOf("grok-build") >= 0) setChip("grok", "GROK-CODE  " + last);
+          else if (l.indexOf("grok") >= 0) setChip("grok", "GROK  " + last);
+          else if (l.indexOf("ollama") >= 0 || l === "jarvis-local") setChip("local", "LOCAL  " + last);
         }
+        document.addEventListener("keydown", function (e) {
+          if (e.key !== "Enter" || e.shiftKey) return;
+          var t = e.target;
+          if (!t || (t.tagName !== "TEXTAREA" && t.getAttribute("contenteditable") !== "true")) return;
+          predict(t.value || t.innerText || "");
+        }, true);
+        document.addEventListener("click", function (e) {
+          var el = e.target;
+          if (!el || !el.closest) return;
+          var btn = el.closest("button,[role='button']");
+          if (!btn) return;
+          var ta = document.querySelector("textarea");
+          if (ta && ta.value) predict(ta.value);
+        }, true);
         var orig = window.fetch;
-        if (!orig || orig.__jarvisChip) return;
-        function wrapped(input, init) {
-          var url = "";
-          try { url = typeof input === "string" ? input : (input && input.url) || ""; } catch (e) {}
-          var p = orig.apply(this, arguments);
-          if (!/complet|\/api\/chat|generate/i.test(url)) return p;
-          p.then(function (res) {
+        if (orig && !orig.__jarvisChip) {
+          function wrapped(input, init) {
             try {
-              var clone = res.clone();
-              var ct = (clone.headers.get("content-type") || "").toLowerCase();
-              if (ct.indexOf("event-stream") >= 0 && clone.body && clone.body.getReader) {
-                var reader = clone.body.getReader();
-                var dec = new TextDecoder();
-                var buf = "";
-                function pump() {
-                  return reader.read().then(function (r) {
-                    if (r.done) { scrape(buf); return; }
-                    buf += dec.decode(r.value, { stream: true });
-                    if (buf.length > 8000) buf = buf.slice(-4000);
-                    scrape(buf);
-                    return pump();
-                  });
-                }
-                return pump();
+              var body = init && init.body;
+              if (typeof body === "string" && body.indexOf("messages") >= 0) {
+                var j = JSON.parse(body);
+                var msgs = j.messages || [];
+                var last = msgs[msgs.length - 1];
+                if (last && typeof last.content === "string") predict(last.content);
               }
-              return clone.text().then(scrape);
             } catch (e) {}
-          }).catch(function () {});
-          return p;
+            var p = orig.apply(this, arguments);
+            try {
+              var url = typeof input === "string" ? input : (input && input.url) || "";
+              if (/complet|\/api\/chat|generate/i.test(url)) {
+                p.then(function (res) {
+                  try {
+                    res.clone().text().then(scrapeRaw);
+                  } catch (e) {}
+                }).catch(function () {});
+              }
+            } catch (e) {}
+            return p;
+          }
+          wrapped.__jarvisChip = true;
+          window.fetch = wrapped;
         }
-        wrapped.__jarvisChip = true;
-        window.fetch = wrapped;
+        ensure();
       })();
 
       try {
