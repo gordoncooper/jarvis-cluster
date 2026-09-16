@@ -138,32 +138,6 @@ data:
       font-family: inherit !important;
     }
 
-    #jarvis-route-chip {
-      position: fixed;
-      right: 16px;
-      bottom: 76px;
-      z-index: 9998;
-      pointer-events: none;
-      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
-      font-size: 11px;
-      letter-spacing: 0.12em;
-      text-transform: uppercase;
-      color: var(--jarvis-cyan);
-      border: 1px solid var(--jarvis-line);
-      background: rgba(7, 9, 11, 0.92);
-      padding: 6px 10px 6px 12px;
-      box-shadow: 0 0 14px rgba(94, 234, 212, 0.18);
-    }
-    #jarvis-route-chip[data-kind="grok"] {
-      color: #fbbf24;
-      border-color: rgba(251, 191, 36, 0.55);
-      box-shadow: 0 0 14px rgba(251, 191, 36, 0.16);
-    }
-    #jarvis-route-chip[data-kind="hands"] {
-      color: #67e8f9;
-      border-color: rgba(103, 232, 249, 0.65);
-      box-shadow: 0 0 16px rgba(103, 232, 249, 0.28);
-    }
     main *:has(> [data-jarvis-mark]) > img,
     main *:has(> [data-jarvis-mark]) > svg,
     main *:has(> [data-jarvis-mark]) > button:has(img),
@@ -175,20 +149,7 @@ data:
     }
   jarvis-hud.js: |
     (function () {
-
-      (function routeChip() {
-        function ensure() {
-          var chip = document.getElementById("jarvis-route-chip");
-          if (chip) return chip;
-          chip = document.createElement("div");
-          chip.id = "jarvis-route-chip";
-          chip.textContent = " · —";
-          (document.body || document.documentElement).appendChild(chip);
-          return chip;
-        }
-        
-        ensure();
-      })();
+)();
 
       try {
         localStorage.setItem("sidebar", "false");
