@@ -4,7 +4,7 @@ metadata:
   name: jarvis-webui-hud
   namespace: apps
   annotations:
-    jarvis.hud: "v9b ROUTED chip predicts from prompt (same keywords as LiteLLM)"
+    jarvis.hud: "v10 chip HANDS+stream; in-chat jarvis wordmark, picker stock"
 data:
   jarvis-hud.css: |
     /* JARVIS HUD v8 — wordmark survives sidebar toggle; model name HUD. */
@@ -146,6 +146,11 @@ data:
       border-color: rgba(251, 191, 36, 0.55);
       box-shadow: 0 0 14px rgba(251, 191, 36, 0.16);
     }
+    #jarvis-route-chip[data-kind="hands"] {
+      color: #67e8f9;
+      border-color: rgba(103, 232, 249, 0.65);
+      box-shadow: 0 0 16px rgba(103, 232, 249, 0.28);
+    }
   jarvis-hud.js: |
     (function () {
 
@@ -165,25 +170,32 @@ data:
           chip.textContent = "ROUTED · " + label;
         }
         var GROK = ["flux", "kustomization", "helm upgrade", "git commit", "write yaml", "patch deployment", "crashloop", "delete pod"];
+        var HANDS = ["cluster-health", "cluster-metrics", "lab-map", "kubectl get", "kubectl describe", "kubectl logs", "are nodes ready", "nodes ready", "get nodes", "get pods", "gpu vram", "nvidia-smi", "cluster status"];
         function predict(text) {
           var l = String(text || "").toLowerCase();
           if (!l.trim()) return;
-          for (var i = 0; i < GROK.length; i++) {
-            if (l.indexOf(GROK[i]) >= 0) {
-              setChip("grok", "GROK-CODE");
-              return;
-            }
+          var i;
+          for (i = 0; i < GROK.length; i++) {
+            if (l.indexOf(GROK[i]) >= 0) { setChip("grok", "GROK-CODE"); return; }
+          }
+          for (i = 0; i < HANDS.length; i++) {
+            if (l.indexOf(HANDS[i]) >= 0) { setChip("hands", "HANDS  openclaw"); return; }
           }
           setChip("local", "LOCAL  ollama/jarvis");
+        }
+        function applyModel(last) {
+          if (!last) return;
+          var l = String(last).toLowerCase();
+          if (l === "jarvis") return;
+          if (l.indexOf("hands") >= 0 || l.indexOf("openclaw") >= 0) setChip("hands", "HANDS  " + last);
+          else if (l.indexOf("code") >= 0 || l.indexOf("grok-build") >= 0) setChip("grok", "GROK-CODE  " + last);
+          else if (l.indexOf("grok") >= 0) setChip("grok", "GROK  " + last);
+          else if (l.indexOf("ollama") >= 0 || l === "jarvis-local") setChip("local", "LOCAL  " + last);
         }
         function scrapeRaw(text) {
           var re = /"model"\s*:\s*"([^"]+)"/g, last = null, x;
           while ((x = re.exec(text))) last = x[1];
-          if (!last || last === "jarvis") return;
-          var l = last.toLowerCase();
-          if (l.indexOf("code") >= 0 || l.indexOf("grok-build") >= 0) setChip("grok", "GROK-CODE  " + last);
-          else if (l.indexOf("grok") >= 0) setChip("grok", "GROK  " + last);
-          else if (l.indexOf("ollama") >= 0 || l === "jarvis-local") setChip("local", "LOCAL  " + last);
+          applyModel(last);
         }
         document.addEventListener("keydown", function (e) {
           if (e.key !== "Enter" || e.shiftKey) return;
@@ -217,6 +229,7 @@ data:
               if (/complet|\/api\/chat|generate/i.test(url)) {
                 p.then(function (res) {
                   try {
+                    applyModel(res.headers.get("x-litellm-model-id") || res.headers.get("x-litellm-model"));
                     res.clone().text().then(scrapeRaw);
                   } catch (e) {}
                 }).catch(function () {});
@@ -254,6 +267,10 @@ data:
               trimmed = el.childNodes[0].nodeValue.trim();
             }
             if (trimmed === "JARVIS") {
+              el.setAttribute("data-jarvis-mark", "1");
+            }
+            if (trimmed === "jarvis") {
+              if (el.closest("button, [role='button'], [role='menu'], [role='listbox'], [role='combobox'], select")) continue;
               el.setAttribute("data-jarvis-mark", "1");
             }
             if (trimmed === "jarvis-local") {
