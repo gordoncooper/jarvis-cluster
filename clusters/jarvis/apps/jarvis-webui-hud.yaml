@@ -4,7 +4,7 @@ metadata:
   name: jarvis-webui-hud
   namespace: apps
   annotations:
-    jarvis.hud: "v10 chip HANDS+stream; in-chat jarvis wordmark, picker stock"
+    jarvis.hud: "v10b hide in-chat owl next to wordmark"
 data:
   jarvis-hud.css: |
     /* JARVIS HUD v8 — wordmark survives sidebar toggle; model name HUD. */
@@ -150,6 +150,15 @@ data:
       color: #67e8f9;
       border-color: rgba(103, 232, 249, 0.65);
       box-shadow: 0 0 16px rgba(103, 232, 249, 0.28);
+    }
+    main *:has(> [data-jarvis-mark]) > img,
+    main *:has(> [data-jarvis-mark]) > svg,
+    main *:has(> [data-jarvis-mark]) > button:has(img),
+    main *:has(> [data-jarvis-mark]) > button:has(svg),
+    main *:has(> img):has(+ *:has([data-jarvis-mark])),
+    main *:has(> svg):has(+ *:has([data-jarvis-mark])),
+    main *:has(> button):has(+ *:has([data-jarvis-mark])) {
+      display: none !important;
     }
   jarvis-hud.js: |
     (function () {
