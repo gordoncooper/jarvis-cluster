@@ -182,16 +182,11 @@ data:
           if (chip) return chip;
           chip = document.createElement("div");
           chip.id = "jarvis-route-chip";
-          chip.textContent = "/* no chip */ · —";
+          chip.textContent = " · —";
           (document.body || document.documentElement).appendChild(chip);
           return chip;
         }
-        function setChip(kind, label) {
-          var chip = ensure();
-          chip.setAttribute("data-kind", kind);
-          chip.textContent = "/* no chip */ · " + label;
-        }
-        /* chip removed */
+        
         ensure();
       })();
 
