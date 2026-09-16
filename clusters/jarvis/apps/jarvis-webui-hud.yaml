@@ -4,7 +4,7 @@ metadata:
   name: jarvis-webui-hud
   namespace: apps
   annotations:
-    jarvis.hud: "v8 wordmark on sidebar toggle; model HUD; childList observer only"
+    jarvis.hud: "v9 routed-model chip (fetch hook, no extra observer)"
 data:
   jarvis-hud.css: |
     /* JARVIS HUD v8 — wordmark survives sidebar toggle; model name HUD. */
@@ -124,8 +124,91 @@ data:
       text-shadow: none !important;
       font-family: inherit !important;
     }
+
+    #jarvis-route-chip {
+      position: fixed;
+      right: 16px;
+      bottom: 76px;
+      z-index: 9998;
+      pointer-events: none;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      font-size: 11px;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--jarvis-cyan);
+      border: 1px solid var(--jarvis-line);
+      background: rgba(7, 9, 11, 0.92);
+      padding: 6px 10px 6px 12px;
+      box-shadow: 0 0 14px rgba(94, 234, 212, 0.18);
+    }
+    #jarvis-route-chip[data-kind="grok"] {
+      color: #fbbf24;
+      border-color: rgba(251, 191, 36, 0.55);
+      box-shadow: 0 0 14px rgba(251, 191, 36, 0.16);
+    }
   jarvis-hud.js: |
     (function () {
+
+      (function routeChip() {
+        var chip = document.getElementById("jarvis-route-chip");
+        if (!chip) {
+          chip = document.createElement("div");
+          chip.id = "jarvis-route-chip";
+          chip.textContent = "ROUTED · —";
+          (document.body || document.documentElement).appendChild(chip);
+        }
+        function pretty(m) {
+          var s = String(m || "");
+          var l = s.toLowerCase();
+          var kind = "local";
+          var label = s;
+          if (l.indexOf("code") >= 0 || l.indexOf("grok-build") >= 0) { kind = "grok"; label = "GROK-CODE  " + s; }
+          else if (l.indexOf("grok") >= 0) { kind = "grok"; label = "GROK  " + s; }
+          else if (l.indexOf("ollama") >= 0 || l === "jarvis-local") { kind = "local"; label = "LOCAL  " + s; }
+          chip.setAttribute("data-kind", kind);
+          chip.textContent = "ROUTED · " + label;
+        }
+        function scrape(text) {
+          var re = /"model"\s*:\s*"([^"]+)"/g;
+          var last = null, x;
+          while ((x = re.exec(text))) last = x[1];
+          if (last && last !== "jarvis") pretty(last);
+        }
+        var orig = window.fetch;
+        if (!orig || orig.__jarvisChip) return;
+        function wrapped(input, init) {
+          var url = "";
+          try { url = typeof input === "string" ? input : (input && input.url) || ""; } catch (e) {}
+          var p = orig.apply(this, arguments);
+          if (!/complet|\/api\/chat|generate/i.test(url)) return p;
+          p.then(function (res) {
+            try {
+              var clone = res.clone();
+              var ct = (clone.headers.get("content-type") || "").toLowerCase();
+              if (ct.indexOf("event-stream") >= 0 && clone.body && clone.body.getReader) {
+                var reader = clone.body.getReader();
+                var dec = new TextDecoder();
+                var buf = "";
+                function pump() {
+                  return reader.read().then(function (r) {
+                    if (r.done) { scrape(buf); return; }
+                    buf += dec.decode(r.value, { stream: true });
+                    if (buf.length > 8000) buf = buf.slice(-4000);
+                    scrape(buf);
+                    return pump();
+                  });
+                }
+                return pump();
+              }
+              return clone.text().then(scrape);
+            } catch (e) {}
+          }).catch(function () {});
+          return p;
+        }
+        wrapped.__jarvisChip = true;
+        window.fetch = wrapped;
+      })();
+
       try {
         localStorage.setItem("sidebar", "false");
         localStorage.setItem("showSidebar", "false");
