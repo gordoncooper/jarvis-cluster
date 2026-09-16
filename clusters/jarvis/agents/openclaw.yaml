@@ -11,7 +11,7 @@ metadata:
   namespace: agents
 data:
   openclaw.json: |
-    {"agents":{"defaults":{"model":{"primary":"jarvis/jarvis-grok-code"},"timeoutSeconds":90}},"models":{"mode":"merge","providers":{"jarvis":{"baseUrl":"http://litellm.inference.svc.cluster.local:4000/v1","apiKey":"${LITELLM_MASTER_KEY}","api":"openai-completions","models":[{"id":"jarvis-grok-code","name":"JARVIS Grok Code"},{"id":"jarvis-local","name":"JARVIS Local 7B"}]}}},"tools":{"loopDetection":{"enabled":true},"exec":{"timeoutSeconds":90,"backgroundMs":8000}},"gateway":{"mode":"local","bind":"lan","trustedProxies":["10.42.0.0/16","10.43.0.0/16"],"controlUi":{"allowedOrigins":["http://agent.lan","http://agent.lan:18789","http://192.168.8.16:18789"]}}}
+    {"agents":{"defaults":{"model":{"primary":"jarvis/jarvis-grok-code"},"timeoutSeconds":180}},"models":{"mode":"merge","providers":{"jarvis":{"baseUrl":"http://litellm.inference.svc.cluster.local:4000/v1","apiKey":"${LITELLM_MASTER_KEY}","api":"openai-completions","models":[{"id":"jarvis-grok-code","name":"JARVIS Grok Code"},{"id":"jarvis-local","name":"JARVIS Local 7B"}]}}},"tools":{"loopDetection":{"enabled":true},"exec":{"timeoutSeconds":180,"backgroundMs":8000}},"gateway":{"mode":"local","bind":"lan","trustedProxies":["10.42.0.0/16","10.43.0.0/16"],"controlUi":{"allowedOrigins":["http://agent.lan","http://agent.lan:18789","http://192.168.8.16:18789"]}}}
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -94,7 +94,7 @@ spec:
             - name: SHIM_PORT
               value: "4001"
             - name: OPENCLAW_ASK_TIMEOUT
-              value: "120"
+              value: "180"
             - name: OPENCLAW_GATEWAY_TOKEN
               valueFrom:
                 secretKeyRef:
