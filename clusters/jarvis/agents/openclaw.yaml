@@ -33,7 +33,7 @@ data:
       },
       "tools": {
         "loopDetection": { "enabled": true },
-        "exec": { "timeoutSeconds": 30, "backgroundMs": 8000 }
+        "exec": { "timeoutSeconds": 90, "backgroundMs": 8000 }
       },
       "gateway": {
         "mode": "local",
