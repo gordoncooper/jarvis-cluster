@@ -54,6 +54,7 @@ data:
             custom_technical_keywords: [kubectl, flux, k3s, kubernetes, helm, etcd, traefik]
             session_affinity: true
             session_affinity_ttl_seconds: 3600
+            return_raw_model_name: true
           complexity_router_default_model: jarvis-local
     general_settings:
       master_key: os.environ/LITELLM_MASTER_KEY
