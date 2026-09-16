@@ -103,6 +103,10 @@ data:
     ::-webkit-scrollbar-track { background: var(--jarvis-bg); }
   jarvis-hud.js: |
     (function () {
+      try {
+        localStorage.setItem("sidebar", "false");
+        localStorage.setItem("showSidebar", "false");
+      } catch (e) {}
       function once() {
         try {
           document.title = "JARVIS";
