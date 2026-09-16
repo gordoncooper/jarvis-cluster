@@ -4,7 +4,7 @@ metadata:
   name: jarvis-webui-hud
   namespace: apps
   annotations:
-    jarvis.hud: "v10b hide in-chat owl next to wordmark"
+    jarvis.hud: "v10c hideOwl geometry (main only)"
 data:
   jarvis-hud.css: |
     /* JARVIS HUD v8 — wordmark survives sidebar toggle; model name HUD. */
@@ -260,6 +260,28 @@ data:
       function once() {
         try {
           document.title = "JARVIS";
+          function hideOwl(el) {
+            if (el.closest("aside, #sidebar, [role='listbox'], [role='menu'], select")) return;
+            var m = el.getBoundingClientRect();
+            if (!m.width) return;
+            var box = el.closest("main, #app") || document.body;
+            var nodes = box.querySelectorAll("img, svg");
+            for (var h = 0; h < nodes.length; h++) {
+              var n = nodes[h];
+              if (n.closest("aside, #sidebar, textarea")) continue;
+              var b = n.getBoundingClientRect();
+              if (b.width < 8 || b.width > 56 || b.height > 56) continue;
+              if (Math.abs((b.top + b.bottom) / 2 - (m.top + m.bottom) / 2) > 22) continue;
+              if (b.right > m.left + 6) continue;
+              if (m.left - b.right > 40) continue;
+              n.style.display = "none";
+              var wrap = n.parentElement;
+              if (wrap && !wrap.querySelector("[data-jarvis-mark]")) {
+                var w = wrap.getBoundingClientRect();
+                if (w.width < 64 && w.height < 64) wrap.style.display = "none";
+              }
+            }
+          }
           var nodes = document.querySelectorAll("aside *, #sidebar *, main *, #app *");
           for (var i = 0; i < nodes.length; i++) {
             var el = nodes[i];
@@ -277,10 +299,12 @@ data:
             }
             if (trimmed === "JARVIS") {
               el.setAttribute("data-jarvis-mark", "1");
+              hideOwl(el);
             }
             if (trimmed === "jarvis") {
               if (el.closest("button, [role='button'], [role='menu'], [role='listbox'], [role='combobox'], select")) continue;
               el.setAttribute("data-jarvis-mark", "1");
+              hideOwl(el);
             }
             if (trimmed === "jarvis-local") {
               if (el.closest("button, [role='button'], [role='menu'], [role='listbox']")) continue;
