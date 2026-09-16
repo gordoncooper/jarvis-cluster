@@ -4,7 +4,7 @@ metadata:
   name: jarvis-webui-hud
   namespace: apps
   annotations:
-    jarvis.hud: "v10c hideOwl geometry (main only)"
+    jarvis.hud: "v10d dialog Confirm contrast"
 data:
   jarvis-hud.css: |
     /* JARVIS HUD v8 — wordmark survives sidebar toggle; model name HUD. */
@@ -70,6 +70,19 @@ data:
     .dark .bg-white, .dark .bg-gray-50,
     .dark .bg-gray-800, .dark .bg-gray-900, .dark .bg-gray-950 {
       background-color: var(--jarvis-bg) !important;
+    }
+    [role="dialog"], [role="alertdialog"] {
+      background: var(--jarvis-panel) !important;
+      color: var(--jarvis-text) !important;
+      border: 1px solid var(--jarvis-line) !important;
+    }
+    [role="dialog"] button, [role="alertdialog"] button {
+      color: var(--jarvis-text) !important;
+      opacity: 1 !important;
+    }
+    [role="dialog"] button:last-of-type,
+    [role="alertdialog"] button:last-of-type {
+      color: #5eead4 !important;
     }
     [data-jarvis-mark] {
       font-size: 22px !important;
