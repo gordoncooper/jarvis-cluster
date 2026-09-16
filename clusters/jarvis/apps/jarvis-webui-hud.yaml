@@ -191,69 +191,40 @@ data:
           chip.setAttribute("data-kind", kind);
           chip.textContent = "ROUTED · " + label;
         }
-        var GROK = ["flux", "kustomization", "helm upgrade", "git commit", "write yaml", "patch deployment", "crashloop", "delete pod"];
-        var HANDS = ["cluster-health", "cluster-metrics", "lab-map", "kubectl get", "kubectl describe", "kubectl logs", "are nodes ready", "nodes ready", "get nodes", "get pods", "gpu vram", "nvidia-smi", "cluster status"];
-        function predict(text) {
-          var l = String(text || "").toLowerCase();
-          if (!l.trim()) return;
-          var i;
-          for (i = 0; i < GROK.length; i++) {
-            if (l.indexOf(GROK[i]) >= 0) { setChip("grok", "GROK-CODE"); return; }
-          }
-          for (i = 0; i < HANDS.length; i++) {
-            if (l.indexOf(HANDS[i]) >= 0) { setChip("hands", "HANDS  openclaw"); return; }
-          }
-          setChip("local", "LOCAL  ollama/jarvis");
-        }
-        function applyModel(last) {
-          if (!last) return;
-          var l = String(last).toLowerCase();
-          if (l === "jarvis") return;
-          if (l.indexOf("hands") >= 0 || l.indexOf("openclaw") >= 0) setChip("hands", "HANDS  " + last);
-          else if (l.indexOf("code") >= 0 || l.indexOf("grok-build") >= 0) setChip("grok", "GROK-CODE  " + last);
-          else if (l.indexOf("grok") >= 0) setChip("grok", "GROK  " + last);
-          else if (l.indexOf("ollama") >= 0 || l === "jarvis-local") setChip("local", "LOCAL  " + last);
-        }
+        function pending() { setChip("wait", "…"); }
         function scrapeRaw(text) {
-          var re = /"model"\s*:\s*"([^"]+)"/g, last = null, x;
-          while ((x = re.exec(text))) last = x[1];
-          applyModel(last);
+          if (!text) return;
+          var s = String(text);
+          if (/chatcmpl-jarvis-hands|jarvis-hands|"model"\s*:\s*"openclaw"/i.test(s)) {
+            setChip("hands", "HANDS  jarvis-hands"); return;
+          }
+          if (/grok-build-0\.1|jarvis-grok-code|grok-code-fast/i.test(s)) {
+            setChip("grok", "GROK-CODE"); return;
+          }
+          if (/ollama\/jarvis|jarvis-local/i.test(s)) {
+            setChip("local", "LOCAL  ollama/jarvis"); return;
+          }
+          if (/"model"\s*:\s*"jarvis-grok"/i.test(s)) {
+            setChip("grok", "GROK"); return;
+          }
         }
         document.addEventListener("keydown", function (e) {
           if (e.key !== "Enter" || e.shiftKey) return;
           var t = e.target;
           if (!t || (t.tagName !== "TEXTAREA" && t.getAttribute("contenteditable") !== "true")) return;
-          predict(t.value || t.innerText || "");
+          pending();
         }, true);
-        document.addEventListener("click", function (e) {
-          var el = e.target;
-          if (!el || !el.closest) return;
-          var btn = el.closest("button,[role='button']");
-          if (!btn) return;
-          var ta = document.querySelector("textarea");
-          if (ta && ta.value) predict(ta.value);
-        }, true);
-        var orig = window.fetch;
-        if (orig && !orig.__jarvisChip) {
+        function hookFetch() {
+          var orig = window.fetch;
+          if (!orig || orig.__jarvisChip) return;
           function wrapped(input, init) {
-            try {
-              var body = init && init.body;
-              if (typeof body === "string" && body.indexOf("messages") >= 0) {
-                var j = JSON.parse(body);
-                var msgs = j.messages || [];
-                var last = msgs[msgs.length - 1];
-                if (last && typeof last.content === "string") predict(last.content);
-              }
-            } catch (e) {}
             var p = orig.apply(this, arguments);
             try {
               var url = typeof input === "string" ? input : (input && input.url) || "";
               if (/complet|\/api\/chat|generate/i.test(url)) {
+                pending();
                 p.then(function (res) {
-                  try {
-                    applyModel(res.headers.get("x-litellm-model-id") || res.headers.get("x-litellm-model"));
-                    res.clone().text().then(scrapeRaw);
-                  } catch (e) {}
+                  try { res.clone().text().then(scrapeRaw); } catch (e) {}
                 }).catch(function () {});
               }
             } catch (e) {}
@@ -262,6 +233,8 @@ data:
           wrapped.__jarvisChip = true;
           window.fetch = wrapped;
         }
+        hookFetch();
+        setInterval(hookFetch, 2000);
         ensure();
       })();
 
