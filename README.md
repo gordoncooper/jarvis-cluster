@@ -1,6 +1,6 @@
 # JARVIS home cluster
 
-Copilot: jarvis-infra `docs/COPILOT.md` then `docs/PLAN.md`. chat.lan is the glass; Hands are in-glass (`jarvis-hands`). Do not add exact-phrase router rules.
+Copilot: jarvis-infra `AGENTS.md` + `docs/COPILOT.md` then `docs/PLAN.md`. This repo `AGENTS.md` is a stub. chat.lan is the glass; Hands are in-glass (`jarvis-hands`). Do not add exact-phrase router rules. Laptop: do not push this GitHub remote as origin.
 
 Flux YAML for a six-node k3s inference lab. **Gitea is origin.** This GitHub
 repo is a **mirror**. Do not point Flux at GitHub.
