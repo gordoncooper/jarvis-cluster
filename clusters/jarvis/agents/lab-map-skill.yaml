@@ -10,7 +10,7 @@ data:
     description: Canonical JARVIS URLs and when to use each surface. Read this instead of curling Homepage or Traefik.
     ---
     Never curl, wget, or scrape HTML to discover URLs. This file is the map.
-
+    
     | the operator opens | URL | For |
     |---|---|---|
     | Chat / voice / RAG | https://chat.lan | jarvis-local (cheap) or jarvis-grok-code |
@@ -19,9 +19,9 @@ data:
     | Grafana | https://grafana.lan | Graphs |
     | Git | http://git.lan | Flux origin (HTTP on purpose) |
     | LLM API | https://llm.lan/v1 | OpenAI-shaped; Goose uses this |
-
+    
     Node count: `node /home/node/.openclaw/skills/cluster-health/k8s.js nodes`
     GPU temp: `node /home/node/.openclaw/skills/cluster-metrics/prom.js nvidia_smi_temperature_gpu`
     Do not use MEMORY.md for live facts. Do not repeat a failed or empty command.
-
-You MAY run `ls -la /cluster/local` (read-only hostPath on apps-01). Do not delete. Do not SSH. Do not touch `/`.
+    
+    You MAY run ls -la /cluster/local (read-only hostPath on apps-01). Do not delete. Do not SSH. Do not touch host /.
