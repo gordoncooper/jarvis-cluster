@@ -4,10 +4,10 @@ metadata:
   name: jarvis-webui-hud
   namespace: apps
   annotations:
-    jarvis.hud: "v10d dialog Confirm contrast"
+    jarvis.hud: "v10e no route chip"
 data:
   jarvis-hud.css: |
-    /* JARVIS HUD v8 — wordmark survives sidebar toggle; model name HUD. */
+    /* JARVIS HUD — CSS theme only. No route chip. */
     :root {
       --jarvis-bg: #07090b;
       --jarvis-panel: #0b1014;
@@ -124,7 +124,6 @@ data:
     ::-webkit-scrollbar { width: 8px; }
     ::-webkit-scrollbar-thumb { background: rgba(94, 234, 212, 0.35); }
     ::-webkit-scrollbar-track { background: var(--jarvis-bg); }
-    /* v8b: model picker stays stock; empty-state title stays HUD */
     button [data-jarvis-model],
     [role="button"] [data-jarvis-model],
     [role="menu"] [data-jarvis-model],
@@ -137,7 +136,6 @@ data:
       text-shadow: none !important;
       font-family: inherit !important;
     }
-
     main *:has(> [data-jarvis-mark]) > img,
     main *:has(> [data-jarvis-mark]) > svg,
     main *:has(> [data-jarvis-mark]) > button:has(img),
@@ -149,8 +147,6 @@ data:
     }
   jarvis-hud.js: |
     (function () {
-)();
-
       try {
         localStorage.setItem("sidebar", "false");
         localStorage.setItem("showSidebar", "false");
@@ -252,15 +248,13 @@ data:
         "<script id=\"jarvis-hud-js\">" + js + "</script>"
         "<!--/jarvis-hud-->"
     )
-    if "<head>" in t:
-        t = t.replace("<head>", "<head>" + block, 1)
-    elif "</head>" in t:
+    if "</head>" in t:
         t = t.replace("</head>", block + "\n</head>", 1)
     else:
         t = block + t
     t = t.replace("<title>Open WebUI</title>", "<title>JARVIS</title>")
     p.write_text(t)
-    print("hud v8 injected", len(css), len(js), flush=True)
+    print("hud injected", len(css), len(js), flush=True)
     HUDPY
     for s in /app/backend/start.sh /app/start.sh start.sh; do
       if [ -f "$s" ]; then exec bash "$s"; fi
