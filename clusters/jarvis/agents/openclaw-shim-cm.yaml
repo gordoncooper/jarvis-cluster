@@ -8,11 +8,11 @@ data:
     #!/usr/bin/env python3
     from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
     import json, os, subprocess, traceback, uuid
-
+    
     PORT = int(os.environ.get("SHIM_PORT", "4001"))
     TIMEOUT = int(os.environ.get("OPENCLAW_ASK_TIMEOUT", "300"))
-
-
+    
+    
     def last_user(body):
         for m in reversed(body.get("messages") or []):
             if m.get("role") != "user":
@@ -24,8 +24,8 @@ data:
                 )
             return str(c or "")
         return ""
-
-
+    
+    
     def extract_text(raw):
         try:
             d = json.loads(raw)
@@ -45,11 +45,11 @@ data:
         if d.get("status") and d.get("status") != "ok":
             return "Hands: " + str(d.get("summary") or d.get("status"))
         return (raw or "").strip()[:4000]
-
-
+    
+    
     def run_agent(msg):
         msg = (msg or "ping")[:8000]
-        sid = "agent:hands:" + uuid.uuid4().hex[:12]
+        sid = "agent:main:" + uuid.uuid4().hex[:12]
         try:
             p = subprocess.run(
                 [
@@ -70,12 +70,12 @@ data:
             err = (p.stderr or "").strip()[-1500:]
             return "Hands empty reply" + ((": " + err) if err else "")
         return extract_text(raw)
-
-
+    
+    
     class H(BaseHTTPRequestHandler):
         def log_message(self, fmt, *args):
             print("[shim]", fmt % args, flush=True)
-
+    
         def _send(self, code, obj, ctype="application/json"):
             b = json.dumps(obj).encode() if not isinstance(obj, (bytes, bytearray)) else obj
             if not isinstance(obj, (bytes, bytearray)):
@@ -85,14 +85,14 @@ data:
             self.send_header("Content-Length", str(len(b)))
             self.end_headers()
             self.wfile.write(b)
-
+    
         def do_GET(self):
             path = self.path.split("?")[0]
             if path in ("/healthz", "/health", "/ready"):
                 self._send(200, {"ok": True})
                 return
             self._send(404, {"error": "not found"})
-
+    
         def do_POST(self):
             n = int(self.headers.get("Content-Length") or 0)
             try:
@@ -144,7 +144,7 @@ data:
                     "finish_reason": "stop",
                 }],
             })
-
-
+    
+    
     if __name__ == "__main__":
         ThreadingHTTPServer(("0.0.0.0", PORT), H).serve_forever()
