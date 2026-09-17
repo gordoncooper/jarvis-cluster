@@ -57,7 +57,7 @@ data:
             escalation_keywords: []
             keyword_tier_rules:
 
-              - keywords: [restart, rollout, recycle, delete pod, are nodes, cluster-health, kubectl get, kubectl describe, kubectl rollout, /cluster/local, list directories, hostpath, ls /cluster, ls -la, apps-01 disk, files on apps-01, running pods, get pods, nodes ready]
+              - keywords: [restart, rollout, recycle, delete pod, are nodes, cluster-health, kubectl get, kubectl describe, kubectl rollout, /cluster/local, list directories, hostpath, ls /cluster, ls -la, apps-01 disk, files on apps-01, running pods, get pods, nodes ready, cluster status, status of the cluster, live data, grab live, pod status, pods up, are the pods, nodes up, cluster up, vram, nvidia-smi, gpu usage]
                 tier: COMPLEX
               - keywords: [kustomization, write a flux, patch yaml, helm template, debug yaml, deployment yaml]
                 tier: REASONING
