@@ -55,6 +55,23 @@ data:
               REASONING: jarvis-grok-code
             custom_technical_keywords: [kubectl, flux, k3s, kubernetes, helm, etcd, traefik]
             keyword_tier_rules:
+          - pattern: "/cluster/local"
+            tier: COMPLEX
+          - pattern: "list directories"
+            tier: COMPLEX
+          - pattern: "list the files"
+            tier: COMPLEX
+          - pattern: "filesystem"
+            tier: COMPLEX
+          - pattern: "host path"
+            tier: COMPLEX
+          - pattern: "hostpath"
+            tier: COMPLEX
+          - pattern: "on disk"
+            tier: COMPLEX
+          - pattern: "ls /cluster"
+            tier: COMPLEX
+
               - keywords: [restart, rollout, recycle, delete pod, are nodes, cluster-health, kubectl get, kubectl describe, kubectl rollout]
                 tier: COMPLEX
               - keywords: [kustomization, write a flux, patch yaml, helm template]

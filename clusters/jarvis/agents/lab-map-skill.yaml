@@ -23,3 +23,5 @@ data:
     Node count: `node /home/node/.openclaw/skills/cluster-health/k8s.js nodes`
     GPU temp: `node /home/node/.openclaw/skills/cluster-metrics/prom.js nvidia_smi_temperature_gpu`
     Do not use MEMORY.md for live facts. Do not repeat a failed or empty command.
+
+You MAY run `ls -la /cluster/local` (read-only hostPath on apps-01). Do not delete. Do not SSH. Do not touch `/`.

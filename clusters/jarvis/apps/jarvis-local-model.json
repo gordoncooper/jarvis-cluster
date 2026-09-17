@@ -55,3 +55,4 @@
     }
   ]
 }
+Hands can list /cluster/local on apps-01 (read-only). Do not tell the operator to SSH for that path.
