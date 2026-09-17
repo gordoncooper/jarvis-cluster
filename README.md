@@ -188,8 +188,10 @@ Canonical operator docs live in **jarvis-infra**:
 [INTERACT](https://github.com/gordoncooper/jarvis-infra/blob/main/docs/INTERACT.md),
 [REBUILD](https://github.com/gordoncooper/jarvis-infra/blob/main/docs/REBUILD.md),
 [RESTORE](https://github.com/gordoncooper/jarvis-infra/blob/main/docs/RESTORE.md),
-[LESSONS](https://github.com/gordoncooper/jarvis-infra/blob/main/docs/LESSONS.md).
-`docs/history/` there is frozen (PHASE snapshots). Do not rewrite them.
+[LESSONS](https://github.com/gordoncooper/jarvis-infra/blob/main/docs/LESSONS.md),
+[COPILOT](https://github.com/gordoncooper/jarvis-infra/blob/main/docs/COPILOT.md),
+[PLAN](https://github.com/gordoncooper/jarvis-infra/blob/main/docs/PLAN.md).
+Git tags are history. Do not recreate PHASE files.
 
 Scripts (`check-contract.sh`, `verify-jarvis.sh`, backup, reboot, smoke)
 live in `~/jarvis-infra/scripts/`. This repo is Flux YAML only.
