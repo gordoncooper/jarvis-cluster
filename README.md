@@ -1,5 +1,7 @@
 # JARVIS cluster (Flux YAML)
 
+Maturity is infra `VERSION` `MATURITY` (not copied here). License: [MIT](LICENSE).
+
 Flux YAML for the six-node k3s lab. **Gitea is origin.** This GitHub
 repository is a **mirror**. Do not point Flux at GitHub.
 
