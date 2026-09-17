@@ -55,24 +55,8 @@ data:
               REASONING: jarvis-grok-code
             custom_technical_keywords: [kubectl, flux, k3s, kubernetes, helm, etcd, traefik]
             keyword_tier_rules:
-          - pattern: "/cluster/local"
-            tier: COMPLEX
-          - pattern: "list directories"
-            tier: COMPLEX
-          - pattern: "list the files"
-            tier: COMPLEX
-          - pattern: "filesystem"
-            tier: COMPLEX
-          - pattern: "host path"
-            tier: COMPLEX
-          - pattern: "hostpath"
-            tier: COMPLEX
-          - pattern: "on disk"
-            tier: COMPLEX
-          - pattern: "ls /cluster"
-            tier: COMPLEX
 
-              - keywords: [restart, rollout, recycle, delete pod, are nodes, cluster-health, kubectl get, kubectl describe, kubectl rollout]
+              - keywords: [restart, rollout, recycle, delete pod, are nodes, cluster-health, kubectl get, kubectl describe, kubectl rollout, /cluster/local, list directories, filesystem, hostpath, ls /cluster, on disk]
                 tier: COMPLEX
               - keywords: [kustomization, write a flux, patch yaml, helm template]
                 tier: REASONING
@@ -96,8 +80,9 @@ data:
                 SIMPLE: conversation, definitions, who-are-you, dates, general knowledge,
                   remembered facts. "What is a GPU?" and "what is kubectl?" are SIMPLE. "Restart piper" and "are nodes Ready?" are NOT SIMPLE.
                 MEDIUM: same as SIMPLE (talk).
-                COMPLEX: live state of THIS homelab right now, or an action on it (restart/recycle/rollout a deployment or delete a pod in apps/inference/agents/monitoring) — node Ready, pods, GPU VRAM/temp,
-                  kubectl get/describe, cluster health, "are the nodes up?", "how's the rack?".
+                COMPLEX: live state of THIS homelab right now, or an action on it (restart/recycle/rollout; delete a pod in apps/inference/agents/monitoring) — node Ready, pods, GPU VRAM/temp,
+                  kubectl get/describe, cluster health, "are the nodes up?", "how's the rack?",
+                  listing /cluster/local or host files on apps-01. Not "what is a GPU/kubectl" (those are SIMPLE).
                 REASONING: write/change YAML, Flux, Helm, patches, CrashLoop debug, design, mutations.
                 Return only the tier name: SIMPLE, MEDIUM, COMPLEX, or REASONING.
           complexity_router_default_model: jarvis-local
