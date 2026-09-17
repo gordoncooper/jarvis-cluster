@@ -56,6 +56,9 @@ spec:
             - { name: RAG_EMBEDDING_MODEL, value: nomic-embed-text }
             - { name: RAG_OLLAMA_BASE_URL, value: "http://ollama-embed.inference.svc.cluster.local:11434" }
           volumeMounts:
+        - name: jarvis-persona
+          mountPath: /etc/jarvis
+          readOnly: true
             - { name: data, mountPath: /app/backend/data }
             - { name: learned, mountPath: /learned }
             - { name: hud, mountPath: /hud, readOnly: true }
