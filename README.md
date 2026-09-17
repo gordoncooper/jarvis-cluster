@@ -1,32 +1,41 @@
-# JARVIS home cluster
+# JARVIS cluster (Flux YAML)
 
-Copilot: jarvis-infra `AGENTS.md` + `docs/COPILOT.md` then `docs/PLAN.md`. This repo `AGENTS.md` is a stub. chat.lan is the glass; Hands are in-glass (`jarvis-hands`). Do not add exact-phrase router rules. Laptop: do not push this GitHub remote as origin.
+Flux YAML for the six-node k3s lab. **Gitea is origin.** This GitHub
+repository is a **mirror**. Do not point Flux at GitHub.
 
-Flux YAML for a six-node k3s inference lab. **Gitea is origin.** This GitHub
-repo is a **mirror**. Do not point Flux at GitHub.
-
-Metal, Ansible, and the homepage **image** live in
+Metal, Ansible, scripts, and the homepage **image** live in
 [gordoncooper/jarvis-infra](https://github.com/gordoncooper/jarvis-infra).
 
-**Canonical pins:** `jarvis-infra/VERSION` on the bastion
-(`~/jarvis-infra/VERSION`). Do not copy git/image tags into this file as
-source of truth. New AI / copilot: read jarvis-infra **`docs/COPILOT.md`** first, then `docs/OPERATING.md` (then LESSONS) before changing YAML.
+This file is the map of **what Flux applies**. Operator contract, discover,
+and rebuild live in infra (`AGENTS.md`, `docs/COPILOT.md`, `docs/OPERATING.md`).
+This repo's [AGENTS.md](AGENTS.md) is a stub — no second bible.
 
-| Item | Value |
+If you opened a **laptop GitHub clone**: it is a cache. Do not `git push`
+this remote as origin. Do not kubectl from a laptop. Edit `~/cluster` on
+the bastion as user **agent** and push to Gitea.
+
+Canonical pins: `~/jarvis-infra/VERSION` on the bastion. Do not copy
+git/image tags into this file.
+
+| | |
 | --- | --- |
-| Pins | `~/jarvis-infra/VERSION` (`GIT_TAG` + `IMAGE`) |
-| Flux origin | http://git.lan/jarvis/cluster.git |
-| k3s | single-server etcd on ctrl-01 (`K3S` in VERSION) |
+| Flux origin | `http://git.lan/jarvis/cluster.git` |
+| Path Flux reads | `./clusters/jarvis` (do not rename) |
+| k3s | single-server etcd on ctrl-01 (`K3S` in infra VERSION) |
+| Glass | chat.lan — Hands in-glass (`jarvis-hands`). agent.lan is break-glass. |
 
 ## Use cases
 
-- **Local chat** — Open WebUI to LiteLLM to Ollama 7B Q6 on gpu-01 (electricity only).
-- **Grok on demand** — same OpenAI-shaped API, models jarvis-grok / jarvis-grok-code via xAI.
-- **RAG** — embeddings on gpu-02 (nomic-embed-text), knowledge in Open WebUI.
-- **Voice** — Whisper STT on chat.lan (HTTPS); Piper TTS on apps-01.
-- **Hands** — in-glass `jarvis-hands` (OpenClaw shim in the OpenClaw pod). http://agent.lan:18789 is break-glass only.
-- **See the rack** — https://home.lan (click tiles for host/GPU/service dossiers + pods) and https://grafana.lan (14574).
-- **GitOps** — edit YAML in cluster as user agent, push Gitea, Flux reconciles.
+- **Local chat** — Open WebUI → LiteLLM → Ollama 7B Q6 on gpu-01.
+- **Grok on demand** — same OpenAI-shaped API, `jarvis-grok` / `jarvis-grok-code`.
+- **RAG** — embeddings on gpu-02, knowledge in Open WebUI (`lab-docs`, `jarvis-learned`).
+- **Voice** — Whisper STT on chat.lan; Piper TTS on apps-01.
+- **Hands** — in-glass `jarvis-hands` (OpenClaw shim in the OpenClaw pod).
+- **See the rack** — https://home.lan and https://grafana.lan.
+- **GitOps** — edit YAML as `agent`, push Gitea, Flux reconciles.
+
+Do not add exact-phrase `keyword_tier_rules`. Prefer vendor knobs
+(LiteLLM config, OpenClaw skills, k8s RBAC).
 
 ## GitOps path
 
@@ -39,56 +48,58 @@ sequenceDiagram
   participant GH as GitHub mirror
   Dev->>Gitea: git push main
   Gitea->>Flux: GitRepository reconcile
-  Flux->>Nodes: apply clusters/jarvis YAML
+  Flux->>Nodes: apply clusters/jarvis
   Dev->>Gitea: mirror-to-github.sh
   Gitea->>GH: git push --mirror
 ```
+
 
 ```mermaid
 flowchart LR
   classDef src fill:#d1fae5,stroke:#047857,color:#111827
   classDef ctrl fill:#e0e7ff,stroke:#3730a3,color:#111827
   classDef mir fill:#f3f4f6,stroke:#6b7280,color:#111827
-  Dev["agent on bastion"] -->|"git push"| Gitea["Gitea git.lan"]
-  Gitea -->|"Flux reconcile"| Ctrl["ctrl-01"]
-  Ctrl --> Workers["apps-01, gpu-01, gpu-02, data nodes"]
-  Gitea -->|"mirror script"| GH["GitHub mirror"]
+  Dev["agent ~/cluster"] -->|"git push"| Gitea["Gitea git.lan"]
+  Gitea -->|"reconcile"| Ctrl["Flux on ctrl-01"]
+  Ctrl --> Workers["apps-01 gpu-01 gpu-02 data-*"]
+  Gitea -->|"mirror"| GH["GitHub cache"]
   class Gitea src
   class Ctrl ctrl
   class GH mir
 ```
 
-## Inference and telemetry data path
+
+## Tree
 
 ```mermaid
-sequenceDiagram
-  actor You
-  participant Chat as chat.lan Open WebUI
-  participant LLM as LiteLLM apps-01
-  participant Local as Ollama gpu-01
-  participant Embed as Ollama gpu-02
-  participant Home as home.lan
-  participant Prom as Prometheus data-02
-  participant Claw as OpenClaw Hands
-  You->>Chat: prompt
-  Chat->>LLM: OpenAI-shaped /v1
-  alt jarvis-local
-    LLM->>Local: generate
-  else jarvis-hands
-    LLM->>Claw: shim :4001
-  else jarvis-grok / grok-code
-    LLM->>LLM: xAI upstream
-  else RAG
-    LLM->>Embed: nomic-embed-text
-  end
-  You->>Home: tiles / events
-  Home->>Prom: in-cluster :9090
-  Prom-->>Home: GPU temp, node, Flux
+flowchart TB
+  classDef root fill:#e0e7ff,stroke:#3730a3,color:#111827
+  FS["clusters/jarvis/kustomization.yaml"]
+  FS --> Inf["inference/"]
+  FS --> Apps["apps/"]
+  FS --> Ag["agents/"]
+  FS --> Mon["monitoring/"]
+  FS --> Tls["tls/"]
+  Inf --> Oll["ollama.yaml  ollama-embed.yaml"]
+  Inf --> Lit["litellm.yaml  litellm-config.yaml"]
+  Inf --> DP["device-plugin.yaml"]
+  Apps --> OW["open-webui.yaml"]
+  Apps --> Hud["jarvis-webui-hud.yaml"]
+  Apps --> Home["homepage.yaml"]
+  Apps --> Pip["piper.yaml"]
+  Ag --> OC["openclaw.yaml  rbac.yaml"]
+  Ag --> Sk["skill ConfigMaps"]
+  Mon --> Pr["prometheus grafana exporters"]
+  Tls --> TS["TLSStore mkcert"]
+  class FS root
 ```
 
-## Workloads by node
 
-Bastion (192.168.8.10) is omitted — it is not a k3s node.
+Keep `path: ./clusters/jarvis`. Gitea is the Flux GitRepository URL.
+
+## Namespaces and placement
+
+Bastion (192.168.8.10) is omitted — not a k3s node.
 
 ```mermaid
 flowchart TB
@@ -123,7 +134,7 @@ flowchart TB
     webui["Open WebUI"]
     litellm["LiteLLM"]
     piper["Piper"]
-    claw["OpenClaw :18789"]
+    claw["OpenClaw :18789 + shim :4001"]
     home["jarvis-home :3000"]
   end
   webui --> litellm
@@ -139,64 +150,150 @@ flowchart TB
   class napps,webui,litellm,piper,claw,home apps
 ```
 
-## Namespaces (this tree)
 
 | Path | Namespace | What |
 | --- | --- | --- |
 | jarvis-infra `bootstrap/gitea.yaml` (not Flux) | gitea | git.lan |
-| clusters/jarvis/inference/ | inference | Ollama, embed, LiteLLM, RuntimeClass |
-| clusters/jarvis/apps/ | apps | Open WebUI, Piper, homepage (image from infra VERSION) |
-| clusters/jarvis/agents/ | agents | OpenClaw + RBAC + skills |
-| clusters/jarvis/monitoring/ | monitoring | Prometheus, Grafana, exporters |
-| clusters/jarvis/tls/ | traefik | mkcert TLSStore for LAN names |
+| `clusters/jarvis/inference/` | inference | Ollama, embed, LiteLLM, RuntimeClass, device plugin |
+| `clusters/jarvis/apps/` | apps | Open WebUI, Piper, homepage, HUD ConfigMap |
+| `clusters/jarvis/agents/` | agents | OpenClaw, shim, skills, RBAC |
+| `clusters/jarvis/monitoring/` | monitoring | Prometheus, Grafana, exporters |
+| `clusters/jarvis/tls/` | traefik | mkcert TLSStore |
 
-Homepage contract: image is built on apps-01 from jarvis-infra
-(`install-jarvis-home.sh` reads `VERSION`) before Flux applies homepage.yaml.
-`imagePullPolicy: Never`. SA `homepage` lists Events + Flux CRs.
+Node labels: `jarvis.role=control|gpu|storage|apps`.
 
-Live path on the bastion clone is `clusters/jarvis/apps/homepage.yaml`
-(same file Flux applies). Keep it in lockstep with
-`jarvis-infra/apps/jarvis-home/homepage.yaml` — `check-contract.sh` compares both.
+## Ingress
 
-## URLs
+```mermaid
+flowchart LR
+  classDef vip fill:#e0e7ff,stroke:#3730a3,color:#111827
+  classDef host fill:#fce7f3,stroke:#9d174d,color:#111827
+  DNS["router DNS"] --> T["Traefik  ctrl-01 .11"]
+  DNS --> HP["hostPort  apps-01 .16"]
+  T --> home["home.lan :443"]
+  T --> chat["chat.lan :443"]
+  T --> llm["llm.lan :443"]
+  T --> graf["grafana.lan :443"]
+  T --> git["git.lan :80 HTTP"]
+  HP --> agent["agent.lan:18789 HTTP"]
+  class T vip
+  class HP,agent host
+```
 
-| URL | App |
-| --- | --- |
-| https://home.lan | Command center (Home + /status + /api/telemetry) |
-| https://chat.lan | Open WebUI |
-| http://agent.lan:18789 | OpenClaw Control UI (break-glass; not :80, not ctrl-01) |
-| https://llm.lan/v1 | LiteLLM |
-| http://git.lan | Gitea |
-| https://grafana.lan | Grafana |
+
+`agent.lan` must resolve to **192.168.8.16**. Traefik on ctrl-01 cannot
+hold that hostPort. `git.lan` stays HTTP on purpose (Flux origin).
+
+## Router (chat.lan)
+
+```mermaid
+sequenceDiagram
+  actor You
+  participant W as Open WebUI chat.lan
+  participant L as LiteLLM apps-01
+  participant Q as Ollama gpu-01
+  participant C as OpenClaw shim :4001
+  participant X as xAI
+  You->>W: prompt to alias jarvis
+  W->>L: /v1/chat/completions
+  alt talk / RAG
+    L->>Q: ollama/jarvis
+  else inspect / recycle
+    L->>C: model jarvis-hands
+  else YAML / hard
+    L->>X: grok-code / grok
+  end
+```
+
+
+Default alias is `jarvis` (LiteLLM `complexity_router`).
+Picker stays as Tony's hatch. Prefixes `local:` `hands:` `code:` `grok:`
+are an Open WebUI filter — do not grow that pet. Do not add keyword rules.
+
+Ollama, Piper, LiteLLM, monitoring images are **digest-pinned**
+(`:tag@sha256:…`, `IfNotPresent`). Homepage is **not** pulled — see below.
+
+## OpenClaw (Hands)
+
+```mermaid
+flowchart LR
+  classDef pod fill:#fce7f3,stroke:#9d174d,color:#111827
+  classDef rbac fill:#e0e7ff,stroke:#3730a3,color:#111827
+  L["LiteLLM jarvis-hands"] --> Shim["openai-shim :4001"]
+  Shim --> Gw["gateway :18789"]
+  Gw --> Skills["skills ConfigMaps"]
+  Gw --> SA["SA openclaw"]
+  SA --> Recycle["Role openclaw-recycle"]
+  Recycle --> NS["apps inference agents monitoring"]
+  class Shim,Gw,Skills pod
+  class SA,Recycle,NS rbac
+```
+
+
+In-glass only for normal use. http://agent.lan:18789 and
+`jarvis-infra/scripts/openclaw-ask.sh` are break-glass.
+Writes in git today: recycle (pod delete + deploy patch). Not cluster-admin.
+**Cat live RBAC before widening.** Recycle the pod → re-pair the Control UI.
+
+## Homepage contract
+
+Image is built on apps-01 from jarvis-infra (`install-jarvis-home.sh` reads
+`VERSION`) **before** Flux applies `homepage.yaml`. `imagePullPolicy: Never`.
+SA `homepage` lists events, pods, nodes, Flux CRs.
+
+Keep `clusters/jarvis/apps/homepage.yaml` in lockstep with
+`jarvis-infra/apps/jarvis-home/homepage.yaml`.
+`check-contract.sh` compares both.
+
+HUD chrome for chat.lan is `clusters/jarvis/apps/jarvis-webui-hud.yaml`
+(ConfigMap inject). Chrome is not routing.
+
+## Data plane
+
+```mermaid
+flowchart TB
+  classDef nfs fill:#fef3c7,stroke:#b45309,color:#111827
+  classDef hp fill:#fce7f3,stroke:#9d174d,color:#111827
+  NFS["data-01 /cluster/nfs"] --> B["backups/ stamps"]
+  NFS --> Snap["snapshots/ etcd"]
+  NFS --> LearnN["jarvis/learned.md mirror"]
+  HP["apps-01 /cluster/local"] --> W["open-webui/"]
+  HP --> O["openclaw/ learned.md MEMORY"]
+  HP --> P["piper/ voices"]
+  class NFS,B,Snap,LearnN nfs
+  class HP,W,O,P hp
+```
+
+
+hostPath is the live app data. NFS is backup + learned mirror.
+Do not commit `learned.md`.
 
 ## Change YAML
 
 Work on the bastion clone of **Gitea**, not GitHub.
 
 1. `cd ~/cluster` as user **agent**
-2. Edit `clusters/jarvis/...` (keep `path: ./clusters/jarvis` — do not rename)
+2. Edit `clusters/jarvis/...` (keep `path: ./clusters/jarvis`)
 3. `git push origin main` → `http://git.lan/jarvis/cluster.git`
-4. Flux applies in about a minute, or `flux reconcile kustomization flux-system --with-source`
+4. Flux applies in about a minute, or:
+
+       flux reconcile kustomization flux-system --with-source
+
 5. Proof lives in infra: `~/jarvis-infra/scripts/verify-jarvis.sh`
-6. Mirror (or wait for the 03:30 backup): `~/jarvis-infra/scripts/mirror-to-github.sh`
+6. Mirror (or wait for 03:30): `~/jarvis-infra/scripts/mirror-to-github.sh`
 
-Ollama, Piper, and LiteLLM images are **digest-pinned** in YAML (`:tag@sha256:…`,
-`IfNotPresent`). Homepage image is **not** pulled: it is imported on apps-01
-from jarvis-infra (`imagePullPolicy: Never`). Do not float those back to `:latest`.
+Example — digest pin lives on the container `image:` field as
+`tag@sha256:…` plus `imagePullPolicy: IfNotPresent`. Homepage stays `Never`.
 
-## Docs and scripts
+## Docs and scripts (infra)
 
-Canonical operator docs live in **jarvis-infra**:
-[OPERATING](https://github.com/gordoncooper/jarvis-infra/blob/main/docs/OPERATING.md),
-[INTERACT](https://github.com/gordoncooper/jarvis-infra/blob/main/docs/INTERACT.md),
-[REBUILD](https://github.com/gordoncooper/jarvis-infra/blob/main/docs/REBUILD.md),
-[RESTORE](https://github.com/gordoncooper/jarvis-infra/blob/main/docs/RESTORE.md),
-[LESSONS](https://github.com/gordoncooper/jarvis-infra/blob/main/docs/LESSONS.md),
-[COPILOT](https://github.com/gordoncooper/jarvis-infra/blob/main/docs/COPILOT.md),
-[PLAN](https://github.com/gordoncooper/jarvis-infra/blob/main/docs/PLAN.md).
-Git tags are history. Do not recreate PHASE files.
+Scripts (`check-contract.sh`, `verify-jarvis.sh`, backup, discover) live in
+`~/jarvis-infra/scripts/`. This repo is YAML only.
 
-Scripts (`check-contract.sh`, `verify-jarvis.sh`, backup, reboot, smoke)
-live in `~/jarvis-infra/scripts/`. This repo is Flux YAML only.
-
-`clusters/jarvis/apps/jarvis-webui-hud.yaml` is the chat.lan HUD (CSS/JS inject). Do not point this repo at GitHub for Flux.
+- [COPILOT](https://github.com/gordoncooper/jarvis-infra/blob/main/docs/COPILOT.md)
+- [OPERATING](https://github.com/gordoncooper/jarvis-infra/blob/main/docs/OPERATING.md)
+- [INTERACT](https://github.com/gordoncooper/jarvis-infra/blob/main/docs/INTERACT.md)
+- [REBUILD](https://github.com/gordoncooper/jarvis-infra/blob/main/docs/REBUILD.md)
+- [RESTORE](https://github.com/gordoncooper/jarvis-infra/blob/main/docs/RESTORE.md)
+- [LESSONS](https://github.com/gordoncooper/jarvis-infra/blob/main/docs/LESSONS.md)
+- [PLAN](https://github.com/gordoncooper/jarvis-infra/blob/main/docs/PLAN.md)
