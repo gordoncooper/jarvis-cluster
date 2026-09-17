@@ -10,3 +10,8 @@ and [AGENTS.md](https://github.com/gordoncooper/jarvis-infra/blob/main/AGENTS.md
 - Never put kubeconfig on a laptop
 - Session 0 discover on the bastion before any YAML change
 - Do not `kubectl apply -f` (bypasses Flux)
+
+If this workspace is a **laptop GitHub clone**: it is a read-only cache.
+Do not `git push` this remote as origin. Do not kubectl from a laptop.
+Edit on the bastion `~/cluster` and push to Gitea. Infra contract: jarvis-infra `AGENTS.md`.
+Prefer Cursor Remote-SSH as user `agent` with folders `~/jarvis-infra` and `~/cluster`.
