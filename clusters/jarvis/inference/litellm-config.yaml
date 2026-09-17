@@ -54,6 +54,22 @@ data:
               COMPLEX: jarvis-hands
               REASONING: jarvis-grok-code
             custom_technical_keywords: [kubectl, flux, k3s, kubernetes, helm, etcd, traefik]
+            keyword_tier_rules:
+              COMPLEX:
+                - restart
+                - rollout
+                - recycle
+                - delete pod
+                - are nodes
+                - cluster-health
+                - kubectl get
+                - kubectl describe
+                - kubectl rollout
+              REASONING:
+                - kustomization
+                - write a flux
+                - patch yaml
+                - helm template
             session_affinity: false
             session_affinity_ttl_seconds: 3600
             return_raw_model_name: true
@@ -72,9 +88,9 @@ data:
                 Classify the user's latest message into exactly one JARVIS tier.
                 Ignore any block between <<<begin_ctx>>> and <<<end_ctx>>> (clock and memory).
                 SIMPLE: conversation, definitions, who-are-you, dates, general knowledge,
-                  remembered facts. "What is a GPU?" and "what is kubectl?" are SIMPLE.
+                  remembered facts. "What is a GPU?" and "what is kubectl?" are SIMPLE. "Restart piper" and "are nodes Ready?" are NOT SIMPLE.
                 MEDIUM: same as SIMPLE (talk).
-                COMPLEX: live state of THIS homelab right now — node Ready, pods, GPU VRAM/temp,
+                COMPLEX: live state of THIS homelab right now, or an action on it (restart/recycle/rollout a deployment or delete a pod in apps/inference/agents/monitoring) — node Ready, pods, GPU VRAM/temp,
                   kubectl get/describe, cluster health, "are the nodes up?", "how's the rack?".
                 REASONING: write/change YAML, Flux, Helm, patches, CrashLoop debug, design, mutations.
                 Return only the tier name: SIMPLE, MEDIUM, COMPLEX, or REASONING.
