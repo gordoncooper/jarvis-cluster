@@ -55,21 +55,10 @@ data:
               REASONING: jarvis-grok-code
             custom_technical_keywords: [kubectl, flux, k3s, kubernetes, helm, etcd, traefik]
             keyword_tier_rules:
-              COMPLEX:
-                - restart
-                - rollout
-                - recycle
-                - delete pod
-                - are nodes
-                - cluster-health
-                - kubectl get
-                - kubectl describe
-                - kubectl rollout
-              REASONING:
-                - kustomization
-                - write a flux
-                - patch yaml
-                - helm template
+              - keywords: [restart, rollout, recycle, delete pod, are nodes, cluster-health, kubectl get, kubectl describe, kubectl rollout]
+                tier: COMPLEX
+              - keywords: [kustomization, write a flux, patch yaml, helm template]
+                tier: REASONING
             session_affinity: false
             session_affinity_ttl_seconds: 3600
             return_raw_model_name: true
