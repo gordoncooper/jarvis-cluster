@@ -34,7 +34,7 @@ data:
           api_base: http://openclaw.agents.svc.cluster.local:4001/v1
           api_key: sk-local
           drop_params: true
-          timeout: 240
+          timeout: 360
       - model_name: jarvis-grok-code
         litellm_params:
           model: xai/grok-code-fast-1
