@@ -51,6 +51,12 @@ rules:
   - apiGroups: [apps]
     resources: [deployments]
     verbs: [patch]
+  - apiGroups: [""]
+    resources: [pods/exec, pods/log]
+    verbs: [get, create]
+  - apiGroups: [apps]
+    resources: [replicasets]
+    verbs: [patch]
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: RoleBinding
@@ -78,6 +84,12 @@ rules:
   - apiGroups: [apps]
     resources: [deployments]
     verbs: [patch]
+  - apiGroups: [""]
+    resources: [pods/exec, pods/log]
+    verbs: [get, create]
+  - apiGroups: [apps]
+    resources: [replicasets]
+    verbs: [patch]
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: RoleBinding
@@ -105,6 +117,12 @@ rules:
   - apiGroups: [apps]
     resources: [deployments]
     verbs: [patch]
+  - apiGroups: [""]
+    resources: [pods/exec, pods/log]
+    verbs: [get, create]
+  - apiGroups: [apps]
+    resources: [replicasets]
+    verbs: [patch]
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: RoleBinding
@@ -131,6 +149,12 @@ rules:
     verbs: [delete]
   - apiGroups: [apps]
     resources: [deployments]
+    verbs: [patch]
+  - apiGroups: [""]
+    resources: [pods/exec, pods/log]
+    verbs: [get, create]
+  - apiGroups: [apps]
+    resources: [replicasets]
     verbs: [patch]
 ---
 apiVersion: rbac.authorization.k8s.io/v1
