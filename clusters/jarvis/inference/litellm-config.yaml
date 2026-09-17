@@ -54,7 +54,7 @@ data:
               COMPLEX: jarvis-hands
               REASONING: jarvis-grok-code
             custom_technical_keywords: [kubectl, flux, k3s, kubernetes, helm, etcd, traefik]
-            escalation_keywords: ["/cluster/local", "list directories", "ls /cluster", "on disk", "hostpath", "filesystem"]
+            escalation_keywords: []
             keyword_tier_rules:
 
               - keywords: [restart, rollout, recycle, delete pod, are nodes, cluster-health, kubectl get, kubectl describe, kubectl rollout, /cluster/local, list directories, List directories, filesystem, hostpath, ls /cluster, ls -la, on disk, piper, open-webui]
