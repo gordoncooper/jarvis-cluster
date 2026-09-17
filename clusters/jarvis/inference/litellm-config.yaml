@@ -57,9 +57,9 @@ data:
             escalation_keywords: []
             keyword_tier_rules:
 
-              - keywords: [restart, rollout, recycle, delete pod, are nodes, cluster-health, kubectl get, kubectl describe, kubectl rollout, /cluster/local, list directories, hostpath, ls /cluster, ls -la]
+              - keywords: [restart, rollout, recycle, delete pod, are nodes, cluster-health, kubectl get, kubectl describe, kubectl rollout, /cluster/local, list directories, hostpath, ls /cluster, ls -la, apps-01 disk, files on apps-01, running pods, get pods, nodes ready]
                 tier: COMPLEX
-              - keywords: [kustomization, write a flux, patch yaml, helm template]
+              - keywords: [kustomization, write a flux, patch yaml, helm template, debug yaml]
                 tier: REASONING
             session_affinity: false
             session_affinity_ttl_seconds: 3600
