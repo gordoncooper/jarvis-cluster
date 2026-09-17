@@ -69,10 +69,13 @@ sequenceDiagram
   participant Embed as Ollama gpu-02
   participant Home as home.lan
   participant Prom as Prometheus data-02
+  participant Claw as OpenClaw Hands
   You->>Chat: prompt
   Chat->>LLM: OpenAI-shaped /v1
   alt jarvis-local
     LLM->>Local: generate
+  else jarvis-hands
+    LLM->>Claw: shim :4001
   else jarvis-grok / grok-code
     LLM->>LLM: xAI upstream
   else RAG
