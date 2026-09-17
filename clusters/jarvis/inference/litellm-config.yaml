@@ -57,7 +57,7 @@ data:
             escalation_keywords: []
             keyword_tier_rules:
 
-              - keywords: [restart, rollout, recycle, delete pod, are nodes, cluster-health, kubectl get, kubectl describe, kubectl rollout, /cluster/local, list directories, List directories, filesystem, hostpath, ls /cluster, ls -la, on disk, piper, open-webui]
+              - keywords: [restart, rollout, recycle, delete pod, are nodes, cluster-health, kubectl get, kubectl describe, kubectl rollout, /cluster/local, list directories, hostpath, ls /cluster, ls -la]
                 tier: COMPLEX
               - keywords: [kustomization, write a flux, patch yaml, helm template]
                 tier: REASONING
@@ -65,27 +65,9 @@ data:
             session_affinity_ttl_seconds: 3600
             return_raw_model_name: true
             classifier_type: heuristic
-            classifier_fallback: heuristic
-            classifier_context_window_size: 3
-            classifier_context_per_turn_chars: 200
-            classifier_context_include_assistant_turns: false
             reminder_markers:
               - open: "<<<begin_ctx>>>"
                 close: "<<<end_ctx>>>"
-            classifier_llm_config:
-              model: jarvis-grok
-              timeout_ms: 8000
-              system_prompt: |
-                Classify the user's latest message into exactly one JARVIS tier.
-                Ignore any block between <<<begin_ctx>>> and <<<end_ctx>>> (clock and memory).
-                SIMPLE: conversation, definitions, who-are-you, dates, general knowledge,
-                  remembered facts. "What is a GPU?" and "what is kubectl?" are SIMPLE. "Restart piper" and "are nodes Ready?" are NOT SIMPLE.
-                MEDIUM: same as SIMPLE (talk).
-                COMPLEX: live state of THIS homelab right now, or an action on it (restart/recycle/rollout; delete a pod in apps/inference/agents/monitoring) — node Ready, pods, GPU VRAM/temp,
-                  kubectl get/describe, cluster health, "are the nodes up?", "how's the rack?",
-                  listing /cluster/local or host files on apps-01. File listings are NEVER REASONING. Not "what is a GPU/kubectl" (those are SIMPLE).
-                REASONING: write/change YAML, Flux, Helm, patches, CrashLoop debug, design, mutations.
-                Return only the tier name: SIMPLE, MEDIUM, COMPLEX, or REASONING.
           complexity_router_default_model: jarvis-local
     general_settings:
       master_key: os.environ/LITELLM_MASTER_KEY
