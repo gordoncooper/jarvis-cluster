@@ -24,7 +24,7 @@ source of truth. New AI / copilot: read jarvis-infra **`docs/COPILOT.md`** first
 - **Grok on demand** — same OpenAI-shaped API, models jarvis-grok / jarvis-grok-code via xAI.
 - **RAG** — embeddings on gpu-02 (nomic-embed-text), knowledge in Open WebUI.
 - **Voice** — Whisper STT on chat.lan (HTTPS); Piper TTS on apps-01.
-- **Hands on the cluster** — OpenClaw at http://agent.lan:18789 (hostPort on apps-01).
+- **Hands** — in-glass `jarvis-hands` (OpenClaw shim in the OpenClaw pod). http://agent.lan:18789 is break-glass only.
 - **See the rack** — https://home.lan (click tiles for host/GPU/service dossiers + pods) and https://grafana.lan (14574).
 - **GitOps** — edit YAML in cluster as user agent, push Gitea, Flux reconciles.
 
@@ -161,7 +161,7 @@ Live path on the bastion clone is `clusters/jarvis/apps/homepage.yaml`
 | --- | --- |
 | https://home.lan | Command center (Home + /status + /api/telemetry) |
 | https://chat.lan | Open WebUI |
-| http://agent.lan:18789 | OpenClaw (not :80, not ctrl-01) |
+| http://agent.lan:18789 | OpenClaw Control UI (break-glass; not :80, not ctrl-01) |
 | https://llm.lan/v1 | LiteLLM |
 | http://git.lan | Gitea |
 | https://grafana.lan | Grafana |
