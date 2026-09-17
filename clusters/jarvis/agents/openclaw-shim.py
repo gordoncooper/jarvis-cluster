@@ -42,7 +42,7 @@ def extract_text(raw):
 
 def run_agent(msg):
     msg = (msg or "ping")[:8000]
-    sid = "agent:hands:" + uuid.uuid4().hex[:12]
+    sid = "agent:main:" + uuid.uuid4().hex[:12]
     try:
         p = subprocess.run(
             [
