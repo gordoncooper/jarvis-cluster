@@ -16,7 +16,7 @@ metadata:
 spec:
   entryPoints: [web]
   routes:
-    - match: Host(`chat.lan`) || Host(`jarvis.lan`)
+    - match: Host(`chat.lan`)
       kind: Rule
       services:
         - name: open-webui

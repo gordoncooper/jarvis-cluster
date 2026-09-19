@@ -109,16 +109,7 @@ spec:
             pathType: Prefix
             backend:
               service: { name: open-webui, port: { number: 8080 } }
-    - host: jarvis.lan
-      http:
-        paths:
-          - path: /
-            pathType: Prefix
-            backend:
-              service: { name: open-webui, port: { number: 8080 } }
-
   tls:
     - secretName: lan-tls
       hosts:
         - chat.lan
-        - jarvis.lan
