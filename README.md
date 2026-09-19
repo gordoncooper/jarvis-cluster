@@ -24,7 +24,12 @@ git/image tags into this file.
 | Flux origin | `http://git.lan/jarvis/cluster.git` |
 | Path Flux reads | `./clusters/jarvis` (do not rename) |
 | k3s | single-server etcd on ctrl-01 (`K3S` in infra VERSION) |
-| Glass | chat.lan — Hands in-glass (`jarvis-hands`). agent.lan is break-glass. |
+| Glass | **jarvis.lan** is the product; **noc.lan** is the operator surface (D-0002). chat.lan and agent.lan are break-glass. |
+
+`jarvis.lan` and `noc.lan` are served by the `jarvis-core` / `jarvis-noc`
+deployments, which are **not** in this repo and **not** reconciled by Flux —
+they are applied by `jarvis-core/deploy/scripts/install-*.sh`. `home.lan`
+(`apps/homepage.yaml`) is legacy and retiring into noc.lan; it still serves.
 
 ## Use cases
 
@@ -33,7 +38,7 @@ git/image tags into this file.
 - **RAG** — embeddings on gpu-02, knowledge in Open WebUI (`lab-docs`, `jarvis-learned`).
 - **Voice** — Whisper STT on chat.lan; Piper TTS on apps-01.
 - **Hands** — in-glass `jarvis-hands` (OpenClaw shim in the OpenClaw pod).
-- **See the rack** — https://home.lan and https://grafana.lan.
+- **See the rack** — https://noc.lan (https://home.lan is legacy) and https://grafana.lan.
 - **GitOps** — edit YAML as `agent`, push Gitea, Flux reconciles.
 
 Do not add exact-phrase `keyword_tier_rules`. Prefer vendor knobs
@@ -172,7 +177,9 @@ flowchart LR
   classDef host fill:#fce7f3,stroke:#9d174d,color:#111827
   DNS["router DNS"] --> T["Traefik  ctrl-01 .11"]
   DNS --> HP["hostPort  apps-01 .16"]
-  T --> home["home.lan :443"]
+  T --> jarvis["jarvis.lan :443 (not Flux)"]
+  T --> noc["noc.lan :443 (not Flux)"]
+  T --> home["home.lan :443 legacy"]
   T --> chat["chat.lan :443"]
   T --> llm["llm.lan :443"]
   T --> graf["grafana.lan :443"]
