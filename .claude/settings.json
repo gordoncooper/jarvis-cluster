@@ -1,0 +1,27 @@
+{
+  "permissions": {
+    "deny": [
+      "Bash(kubectl apply:*)",
+      "Bash(kubectl replace:*)",
+      "Bash(kubectl patch:*)",
+      "Bash(kubectl edit:*)",
+      "Bash(kubectl scale:*)",
+      "Bash(k3s kubectl apply:*)",
+      "Bash(k3s kubectl replace:*)",
+      "Bash(k3s kubectl patch:*)",
+      "Bash(k3s kubectl edit:*)",
+      "Bash(k3s kubectl scale:*)",
+      "Bash(*kubectl * apply *)",
+      "Bash(*kubectl * patch *)",
+      "Bash(git push --force:*)",
+      "Bash(git push -f:*)",
+      "Bash(git tag -f:*)",
+      "Bash(git tag --force:*)",
+      "Read(**/*.key)",
+      "Read(**/*.agekey)",
+      "Read(**/.kube/**)",
+      "Edit(**/*.key)",
+      "Edit(**/*.agekey)"
+    ]
+  }
+}

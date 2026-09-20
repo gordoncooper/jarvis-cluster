@@ -14,6 +14,8 @@ Rules specific to this repo:
 - Do not `kubectl apply -f` here; Flux reconciles this repo
 - Never push this repo to GitHub as if it were origin
 - Session 0 discover on the bastion before any YAML change
+- `.claude/settings.json` holds the deny rules that enforce the two rules above
+  for Claude Code and Grok CLI (D-0007). It is not a second rules file — keep it.
 
 Not everything on the cluster is in this repo. `jarvis.lan` and `noc.lan` are
 applied outside Flux from `jarvis-core/deploy/scripts/`. If you cannot find a
