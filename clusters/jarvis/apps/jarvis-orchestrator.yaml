@@ -11,9 +11,13 @@ metadata:
   namespace: apps
 data:
   briefing.md: |
+    ## Lab
     The lab is a physical LAN rack (192.168.8.0/24): bastion, ctrl-01, gpu-01,
     gpu-02, data-01, data-02, apps-01. Operator is Gordon. Product surface is
     jarvis.lan. Live numbers come from the cluster, not from memory.
+
+    ## Focus
+    Do not invent live cluster numbers. Hands owns verbs.
   greeting: "Good evening, Gordon."
   blurb: "Jarvis lab · LAN rack · ask me anything."
 ---
@@ -36,7 +40,7 @@ spec:
         jarvis.role: apps
       containers:
         - name: orchestrator
-          image: docker.io/library/jarvis-orchestrator:v0.6.17
+          image: docker.io/library/jarvis-orchestrator:v0.6.18
           imagePullPolicy: Never
           env:
             - name: LITELLM_BASE
