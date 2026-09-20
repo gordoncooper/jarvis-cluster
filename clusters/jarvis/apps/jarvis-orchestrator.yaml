@@ -76,8 +76,8 @@ spec:
               subPath: briefing.md
               readOnly: true
           readinessProbe:
-            httpGet: { path: /health, port: http }
-            initialDelaySeconds: 3
+            httpGet: { path: /readyz, port: http }
+            initialDelaySeconds: 2
             periodSeconds: 5
           resources:
             requests: { cpu: 50m, memory: 128Mi }
