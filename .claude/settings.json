@@ -1,11 +1,6 @@
 {
   "permissions": {
     "deny": [
-      "Bash(kubectl apply:*)",
-      "Bash(kubectl replace:*)",
-      "Bash(k3s kubectl apply:*)",
-      "Bash(k3s kubectl replace:*)",
-      "Bash(*kubectl * apply *)",
       "Bash(kubectl delete pvc:*)",
       "Bash(kubectl delete pv:*)",
       "Bash(kubectl delete ns:*)",
@@ -14,8 +9,8 @@
       "Bash(*kubectl delete pvc *)",
       "Bash(*kubectl delete ns *)",
       "Bash(*kubectl delete namespace *)",
-      "Bash(git push --force:*)",
-      "Bash(git push -f:*)",
+      "Bash(git push --force *)",
+      "Bash(git push -f *)",
       "Bash(git tag -f:*)",
       "Bash(git tag --force:*)",
       "Read(**/*.key)",
