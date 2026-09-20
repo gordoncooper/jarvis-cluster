@@ -7,3 +7,4 @@ resources:
   - ollama-embed.yaml
   - litellm-config.yaml
   - litellm.yaml
+  - jarvis-whisper.yaml

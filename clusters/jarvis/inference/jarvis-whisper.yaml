@@ -1,0 +1,56 @@
+# Whisper STT (D-0015 / D-0016) — Speaches OpenAI-compatible transcriptions on gpu-02.
+# ollama-embed remains on this node but without an exclusive GPU claim so STT can use CUDA.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: jarvis-whisper
+  namespace: inference
+spec:
+  replicas: 1
+  selector:
+    matchLabels: { app: jarvis-whisper }
+  strategy: { type: Recreate }
+  template:
+    metadata:
+      labels: { app: jarvis-whisper }
+    spec:
+      nodeSelector:
+        jarvis.role: gpu
+        jarvis.gpu: perception
+      runtimeClassName: nvidia
+      containers:
+        - name: whisper
+          image: ghcr.io/speaches-ai/speaches@sha256:6ec12ebf890a17e0d4b242a8ba9e0eb1fb836e60e8a3c857aea9838d541579ac
+          imagePullPolicy: IfNotPresent
+          ports:
+            - { name: http, containerPort: 8000 }
+          env:
+            - { name: WHISPER__MODEL, value: "Systran/faster-whisper-small" }
+            - { name: WHISPER__INFERENCE_DEVICE, value: "cuda" }
+            - { name: WHISPER__TTL, value: "-1" }
+            - { name: NVIDIA_VISIBLE_DEVICES, value: "all" }
+            - { name: NVIDIA_DRIVER_CAPABILITIES, value: "compute,utility" }
+          resources:
+            requests: { nvidia.com/gpu: "1", memory: 2Gi, cpu: 100m }
+            limits: { nvidia.com/gpu: "1", memory: 6Gi }
+          readinessProbe:
+            httpGet: { path: /health, port: http }
+            initialDelaySeconds: 10
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 18
+          volumeMounts:
+            - { name: hf-cache, mountPath: /home/ubuntu/.cache/huggingface/hub }
+      volumes:
+        - name: hf-cache
+          hostPath: { path: /mnt/nfs/models/whisper-hf, type: DirectoryOrCreate }
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: jarvis-whisper
+  namespace: inference
+spec:
+  selector: { app: jarvis-whisper }
+  ports:
+    - { name: http, port: 8000, targetPort: http }

@@ -36,7 +36,7 @@ spec:
         jarvis.role: apps
       containers:
         - name: orchestrator
-          image: docker.io/library/jarvis-orchestrator:v0.6.1
+          image: docker.io/library/jarvis-orchestrator:v0.6.2
           imagePullPolicy: Never
           env:
             - name: LITELLM_BASE

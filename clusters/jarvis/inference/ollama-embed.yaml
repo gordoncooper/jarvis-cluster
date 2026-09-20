@@ -15,7 +15,6 @@ spec:
       nodeSelector:
         jarvis.role: gpu
         jarvis.gpu: perception
-      runtimeClassName: nvidia
       containers:
         - name: ollama
           image: docker.io/ollama/ollama:latest@sha256:684d8674b4315fa18f4f0e973a118ec2652ed96f67563277839985175858e0ba
@@ -27,8 +26,8 @@ spec:
             - { name: NVIDIA_VISIBLE_DEVICES, value: all }
             - { name: NVIDIA_DRIVER_CAPABILITIES, value: compute,utility }
           resources:
-            requests: { nvidia.com/gpu: "1", memory: 2Gi }
-            limits:   { nvidia.com/gpu: "1", memory: 8Gi }
+            requests: { memory: 2Gi }
+            limits:   { memory: 8Gi }
           volumeMounts:
             - { name: models, mountPath: /root/.ollama }
       volumes:
