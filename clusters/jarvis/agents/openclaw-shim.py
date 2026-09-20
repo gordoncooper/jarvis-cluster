@@ -1,9 +1,46 @@
 #!/usr/bin/env python3
+"""OpenClaw OpenAI shim + constrained product verbs (D-0010 / D-0022)."""
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
-import json, os, subprocess, traceback, uuid
+import json
+import os
+import subprocess
+import traceback
+import uuid
 
 PORT = int(os.environ.get("SHIM_PORT", "4001"))
 TIMEOUT = int(os.environ.get("OPENCLAW_ASK_TIMEOUT", "300"))
+VERB_TIMEOUT = int(os.environ.get("VERB_TIMEOUT", "60"))
+
+HEALTH = "/home/node/.openclaw/skills/cluster-health/k8s.js"
+METRICS = "/home/node/.openclaw/skills/cluster-metrics/prom.js"
+
+# Declared product verbs only — no free-form agent for these (D-0010).
+VERBS = {
+    "cluster.health": [
+        ["node", HEALTH, "nodes"],
+        ["node", HEALTH, "pods"],
+    ],
+    "cluster.gpus": [
+        ["node", METRICS, "nvidia_smi_temperature_gpu"],
+        ["node", METRICS, "nvidia_smi_memory_used_bytes"],
+    ],
+    "lab.map": None,  # static + optional node count
+}
+
+LAB_MAP = """JARVIS lab map (product + break-glass):
+
+| Surface | URL | For |
+|---|---|---|
+| Product glass | https://jarvis.lan | Daily talk, voice, memory |
+| NOC | https://noc.lan | Nodes, workloads, alerts |
+| Chat (break-glass) | https://chat.lan | OWUI when glass is down |
+| Agent (break-glass) | http://agent.lan:18789 | OpenClaw UI |
+| Grafana | https://grafana.lan | Graphs |
+| Git (Flux origin) | http://git.lan | cluster YAML |
+| LLM API | https://llm.lan/v1 | OpenAI-shaped |
+
+Live node snapshot follows (if available).
+"""
 
 
 def last_user(body):
@@ -30,7 +67,7 @@ def extract_text(raw):
         for p in (res.get("payloads") or [])
         if isinstance(p, dict) and p.get("text")
     ]
-    vis = ((res.get("meta") or {}).get("finalAssistantVisibleText"))
+    vis = (res.get("meta") or {}).get("finalAssistantVisibleText")
     if vis:
         return str(vis)
     if texts:
@@ -46,10 +83,14 @@ def run_agent(msg):
     try:
         p = subprocess.run(
             [
-                "openclaw", "agent",
-                "--session-key", sid,
-                "--message", msg,
-                "--timeout", str(TIMEOUT),
+                "openclaw",
+                "agent",
+                "--session-key",
+                sid,
+                "--message",
+                msg,
+                "--timeout",
+                str(TIMEOUT),
                 "--json",
             ],
             capture_output=True,
@@ -57,7 +98,10 @@ def run_agent(msg):
             timeout=TIMEOUT + 30,
         )
     except subprocess.TimeoutExpired:
-        return "Hands timed out waiting for OpenClaw. The action may still have completed; check the cluster."
+        return (
+            "Hands timed out waiting for OpenClaw. "
+            "The action may still have completed; check the cluster."
+        )
     raw = (p.stdout or "").strip()
     if not raw:
         err = (p.stderr or "").strip()[-1500:]
@@ -65,14 +109,47 @@ def run_agent(msg):
     return extract_text(raw)
 
 
+def run_cmd(argv):
+    try:
+        p = subprocess.run(
+            argv,
+            capture_output=True,
+            text=True,
+            timeout=VERB_TIMEOUT,
+        )
+    except subprocess.TimeoutExpired:
+        return "TIMEOUT running: " + " ".join(argv)
+    out = (p.stdout or "").strip()
+    err = (p.stderr or "").strip()
+    if p.returncode != 0:
+        return f"exit {p.returncode}: {err or out or 'no output'}"
+    return out or "(empty)"
+
+
+def run_verb(verb: str) -> dict:
+    verb = (verb or "").strip()
+    if verb not in VERBS:
+        return {"ok": False, "verb": verb, "error": "unknown verb"}
+    parts = []
+    if verb == "lab.map":
+        parts.append(LAB_MAP.strip())
+        parts.append("--- nodes ---")
+        parts.append(run_cmd(["node", HEALTH, "nodes"]))
+    else:
+        for argv in VERBS[verb]:
+            parts.append("$ " + " ".join(argv[2:]))
+            parts.append(run_cmd(argv))
+            parts.append("")
+    text = "\n".join(parts).strip()
+    return {"ok": True, "verb": verb, "class": "trusted", "text": text}
+
+
 class H(BaseHTTPRequestHandler):
     def log_message(self, fmt, *args):
         print("[shim]", fmt % args, flush=True)
 
     def _send(self, code, obj, ctype="application/json"):
-        b = json.dumps(obj).encode() if not isinstance(obj, (bytes, bytearray)) else obj
-        if not isinstance(obj, (bytes, bytearray)):
-            b = json.dumps(obj).encode()
+        b = json.dumps(obj).encode()
         self.send_response(code)
         self.send_header("Content-Type", ctype)
         self.send_header("Content-Length", str(len(b)))
@@ -82,7 +159,7 @@ class H(BaseHTTPRequestHandler):
     def do_GET(self):
         path = self.path.split("?")[0]
         if path in ("/healthz", "/health", "/ready"):
-            self._send(200, {"ok": True})
+            self._send(200, {"ok": True, "verbs": sorted(VERBS.keys())})
             return
         self._send(404, {"error": "not found"})
 
@@ -94,6 +171,19 @@ class H(BaseHTTPRequestHandler):
             self._send(400, {"error": "bad json"})
             return
         path = self.path.split("?")[0]
+
+        if path == "/v1/verbs":
+            try:
+                result = run_verb(str(body.get("verb") or ""))
+            except Exception:
+                result = {
+                    "ok": False,
+                    "error": "verb failed",
+                    "detail": traceback.format_exc()[-1500:],
+                }
+            self._send(200 if result.get("ok") else 400, result)
+            return
+
         if path not in ("/v1/chat/completions", "/chat/completions"):
             self._send(404, {"error": "not found"})
             return
@@ -111,11 +201,13 @@ class H(BaseHTTPRequestHandler):
                 "id": "chatcmpl-hands",
                 "object": "chat.completion.chunk",
                 "model": "jarvis-hands",
-                "choices": [{
-                    "index": 0,
-                    "delta": {"role": "assistant", "content": text},
-                    "finish_reason": None,
-                }],
+                "choices": [
+                    {
+                        "index": 0,
+                        "delta": {"role": "assistant", "content": text},
+                        "finish_reason": None,
+                    }
+                ],
             }
             done = {
                 "id": "chatcmpl-hands",
@@ -127,16 +219,21 @@ class H(BaseHTTPRequestHandler):
             self.wfile.write(b"data: " + json.dumps(done).encode() + b"\n\n")
             self.wfile.write(b"data: [DONE]\n\n")
             return
-        self._send(200, {
-            "id": "chatcmpl-hands",
-            "object": "chat.completion",
-            "model": "jarvis-hands",
-            "choices": [{
-                "index": 0,
-                "message": {"role": "assistant", "content": text},
-                "finish_reason": "stop",
-            }],
-        })
+        self._send(
+            200,
+            {
+                "id": "chatcmpl-hands",
+                "object": "chat.completion",
+                "model": "jarvis-hands",
+                "choices": [
+                    {
+                        "index": 0,
+                        "message": {"role": "assistant", "content": text},
+                        "finish_reason": "stop",
+                    }
+                ],
+            },
+        )
 
 
 if __name__ == "__main__":
