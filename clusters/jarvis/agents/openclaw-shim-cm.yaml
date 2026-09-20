@@ -10,44 +10,36 @@ data:
     from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
     import json
     import os
+    import re
     import subprocess
     import traceback
     import uuid
 
+    # Word forms for small node counts (TTS-friendly).
+
     PORT = int(os.environ.get("SHIM_PORT", "4001"))
     TIMEOUT = int(os.environ.get("OPENCLAW_ASK_TIMEOUT", "300"))
-    VERB_TIMEOUT = int(os.environ.get("VERB_TIMEOUT", "60"))
+    VERB_TIMEOUT = int(os.environ.get("VERB_TIMEOUT", "30"))
 
     HEALTH = "/home/node/.openclaw/skills/cluster-health/k8s.js"
     METRICS = "/home/node/.openclaw/skills/cluster-metrics/prom.js"
+    SKILL_DIRS = (
+        "/home/node/.openclaw/skills/cluster-health",
+        "/home/node/.openclaw/skills/cluster-metrics",
+        "/home/node/.openclaw/skills/lab-map",
+    )
 
-    # Declared product verbs only — no free-form agent for these (D-0010).
-    VERBS = {
-        "cluster.health": [
-            ["node", HEALTH, "nodes"],
-            ["node", HEALTH, "pods"],
-        ],
-        "cluster.gpus": [
-            ["node", METRICS, "nvidia_smi_temperature_gpu"],
-            ["node", METRICS, "nvidia_smi_memory_used_bytes"],
-        ],
-        "lab.map": None,  # static + optional node count
-    }
+    VERBS = ("cluster.health", "cluster.gpus", "lab.map")
 
-    LAB_MAP = """JARVIS lab map (product + break-glass):
-
-    | Surface | URL | For |
-    |---|---|---|
-    | Product glass | https://jarvis.lan | Daily talk, voice, memory |
-    | NOC | https://noc.lan | Nodes, workloads, alerts |
-    | Chat (break-glass) | https://chat.lan | OWUI when glass is down |
-    | Agent (break-glass) | http://agent.lan:18789 | OpenClaw UI |
-    | Grafana | https://grafana.lan | Graphs |
-    | Git (Flux origin) | http://git.lan | cluster YAML |
-    | LLM API | https://llm.lan/v1 | OpenAI-shaped |
-
-    Live node snapshot follows (if available).
-    """
+    SURFACES = [
+        {"name": "Product glass", "url": "https://jarvis.lan", "for": "Daily talk, voice, memory"},
+        {"name": "NOC", "url": "https://noc.lan", "for": "Nodes, workloads, alerts"},
+        {"name": "Chat (break-glass)", "url": "https://chat.lan", "for": "OWUI when glass is down"},
+        {"name": "Agent (break-glass)", "url": "http://agent.lan:18789", "for": "OpenClaw UI"},
+        {"name": "Grafana", "url": "https://grafana.lan", "for": "Graphs"},
+        {"name": "Git (Flux origin)", "url": "http://git.lan", "for": "cluster YAML"},
+        {"name": "LLM API", "url": "https://llm.lan/v1", "for": "OpenAI-shaped"},
+    ]
 
 
     def last_user(body):
@@ -125,30 +117,205 @@ data:
                 timeout=VERB_TIMEOUT,
             )
         except subprocess.TimeoutExpired:
-            return "TIMEOUT running: " + " ".join(argv)
+            return None, "timeout"
         out = (p.stdout or "").strip()
         err = (p.stderr or "").strip()
         if p.returncode != 0:
-            return f"exit {p.returncode}: {err or out or 'no output'}"
-        return out or "(empty)"
+            return None, (err or out or f"exit {p.returncode}")[:500]
+        return out, None
+
+
+    def parse_nodes(raw: str) -> list[dict]:
+        nodes = []
+        for line in (raw or "").splitlines():
+            line = line.strip()
+            if not line or line.startswith("count="):
+                continue
+            # name\tReady=True\tip
+            parts = line.split("\t")
+            if len(parts) < 2:
+                continue
+            name = parts[0]
+            ready = "True" in parts[1] if len(parts) > 1 else False
+            ip = parts[2] if len(parts) > 2 else ""
+            nodes.append({"name": name, "ready": ready, "ip": ip})
+        return nodes
+
+
+    def parse_prom(raw: str, value_key: str) -> dict[str, float]:
+        """Map instance=node -> numeric value from prom.js one-line samples."""
+        out: dict[str, float] = {}
+        for line in (raw or "").splitlines():
+            line = line.strip()
+            if not line or line.startswith("#"):
+                continue
+            m = re.search(r'instance=([^,\s}]+)', line)
+            vm = re.search(r"\}\s+([0-9.eE+-]+)\s*$", line) or re.search(
+                r"\s([0-9.eE+-]+)\s*$", line
+            )
+            if not m or not vm:
+                continue
+            try:
+                out[m.group(1)] = float(vm.group(1))
+            except ValueError:
+                continue
+        return out
+
+
+    def fmt_bytes(n: float) -> str:
+        for unit, div in (("GiB", 1024**3), ("MiB", 1024**2), ("KiB", 1024)):
+            if n >= div:
+                return f"{n / div:.1f} {unit}"
+        return f"{int(n)} B"
+
+
+    def verb_cluster_health() -> dict:
+        nodes_raw, err_n = run_cmd(["node", HEALTH, "nodes"])
+        pods_raw, err_p = run_cmd(["node", HEALTH, "pods"])
+        if err_n and not nodes_raw:
+            return {"ok": False, "verb": "cluster.health", "error": err_n}
+        nodes = parse_nodes(nodes_raw or "")
+        ready = sum(1 for n in nodes if n.get("ready"))
+        total = len(nodes)
+        pod_summary = (pods_raw or "").strip() or (err_p or "pods unavailable")
+        healthy = ready == total and total > 0
+        words = {1: "One", 2: "Two", 3: "Three", 4: "Four", 5: "Five", 6: "Six", 7: "Seven", 8: "Eight"}
+        if ready == total and total > 0:
+            label = words.get(total, str(total))
+            text = f"{label} nodes Ready."
+        else:
+            bad = [n["name"] for n in nodes if not n.get("ready")]
+            text = f"{ready}/{total} nodes Ready"
+            if bad:
+                text += f" (not Ready: {', '.join(bad)})"
+            text += "."
+        # Prefer calm prose over raw helper dump.
+        low = pod_summary.lower()
+        if "all pods" in low and "(" in pod_summary:
+            m = re.search(r"\((\d+)\s+total\)", pod_summary, re.I)
+            n = m.group(1) if m else None
+            if n and "running" in low:
+                text += f" All {n} pods Running or Succeeded."
+            else:
+                text += " " + pod_summary[0].upper() + pod_summary[1:] + "."
+        elif pod_summary:
+            text += " " + pod_summary + "."
+        return {
+            "ok": True,
+            "verb": "cluster.health",
+            "class": "trusted",
+            "text": text.strip(),
+            "data": {
+                "nodes": nodes,
+                "ready_count": ready,
+                "node_count": total,
+                "pod_summary": pod_summary,
+                "healthy": healthy,
+            },
+        }
+
+
+    def verb_cluster_gpus() -> dict:
+        temp_raw, err_t = run_cmd(["node", METRICS, "nvidia_smi_temperature_gpu"])
+        mem_raw, err_m = run_cmd(["node", METRICS, "nvidia_smi_memory_used_bytes"])
+        if err_t and not temp_raw:
+            return {"ok": False, "verb": "cluster.gpus", "error": err_t}
+        temps = parse_prom(temp_raw or "", "temp")
+        mems = parse_prom(mem_raw or "", "mem")
+        nodes = sorted(set(temps) | set(mems))
+        gpus = []
+        bits = []
+        for node in nodes:
+            t = temps.get(node)
+            m = mems.get(node)
+            entry = {"node": node}
+            if t is not None:
+                entry["temp_c"] = t
+            if m is not None:
+                entry["mem_used_bytes"] = m
+            gpus.append(entry)
+            part = node
+            if t is not None:
+                part += f" {int(t)}°C"
+            if m is not None:
+                part += f", {fmt_bytes(m)} used"
+            bits.append(part)
+        if not bits:
+            return {
+                "ok": False,
+                "verb": "cluster.gpus",
+                "error": err_m or err_t or "no GPU samples",
+            }
+        text = "GPU status: " + "; ".join(bits) + "."
+        return {
+            "ok": True,
+            "verb": "cluster.gpus",
+            "class": "trusted",
+            "text": text,
+            "data": {"gpus": gpus},
+        }
+
+
+    def verb_lab_map() -> dict:
+        nodes_raw, _err = run_cmd(["node", HEALTH, "nodes"])
+        nodes = parse_nodes(nodes_raw or "")
+        lines = ["Lab surfaces:"]
+        for s in SURFACES:
+            lines.append(f"- {s['name']}: {s['url']} ({s['for']})")
+        if nodes:
+            ready = sum(1 for n in nodes if n.get("ready"))
+            lines.append(f"Nodes: {ready}/{len(nodes)} Ready ({', '.join(n['name'] for n in nodes)}).")
+        text = "\n".join(lines)
+        return {
+            "ok": True,
+            "verb": "lab.map",
+            "class": "trusted",
+            "text": text,
+            "data": {"surfaces": SURFACES, "nodes": nodes},
+        }
 
 
     def run_verb(verb: str) -> dict:
         verb = (verb or "").strip()
-        if verb not in VERBS:
-            return {"ok": False, "verb": verb, "error": "unknown verb"}
-        parts = []
+        if verb == "cluster.health":
+            return verb_cluster_health()
+        if verb == "cluster.gpus":
+            return verb_cluster_gpus()
         if verb == "lab.map":
-            parts.append(LAB_MAP.strip())
-            parts.append("--- nodes ---")
-            parts.append(run_cmd(["node", HEALTH, "nodes"]))
+            return verb_lab_map()
+        return {"ok": False, "verb": verb, "error": "unknown verb"}
+
+
+    def deep_health() -> dict:
+        skills = {}
+        all_ok = True
+        for d in SKILL_DIRS:
+            name = d.rsplit("/", 1)[-1]
+            present = os.path.isdir(d) and any(
+                f.endswith(".js") or f == "SKILL.md" for f in (os.listdir(d) if os.path.isdir(d) else [])
+            )
+            skills[name] = present
+            if not present:
+                all_ok = False
+        probe_ok = False
+        probe_err = None
+        if skills.get("cluster-health"):
+            out, err = run_cmd(["node", HEALTH, "nodes"])
+            if out and not err:
+                probe_ok = True
+            else:
+                probe_err = err or "empty"
+                all_ok = False
         else:
-            for argv in VERBS[verb]:
-                parts.append("$ " + " ".join(argv[2:]))
-                parts.append(run_cmd(argv))
-                parts.append("")
-        text = "\n".join(parts).strip()
-        return {"ok": True, "verb": verb, "class": "trusted", "text": text}
+            all_ok = False
+            probe_err = "skill missing"
+        return {
+            "ok": all_ok,
+            "verbs": list(VERBS),
+            "skills_mounted": skills,
+            "nodes_probe": probe_ok,
+            "nodes_probe_error": probe_err,
+        }
 
 
     class H(BaseHTTPRequestHandler):
@@ -166,7 +333,8 @@ data:
         def do_GET(self):
             path = self.path.split("?")[0]
             if path in ("/healthz", "/health", "/ready"):
-                self._send(200, {"ok": True, "verbs": sorted(VERBS.keys())})
+                h = deep_health()
+                self._send(200 if h.get("ok") else 503, h)
                 return
             self._send(404, {"error": "not found"})
 
@@ -183,11 +351,8 @@ data:
                 try:
                     result = run_verb(str(body.get("verb") or ""))
                 except Exception:
-                    result = {
-                        "ok": False,
-                        "error": "verb failed",
-                        "detail": traceback.format_exc()[-1500:],
-                    }
+                    print("[shim] verb error\n" + traceback.format_exc()[-1500:], flush=True)
+                    result = {"ok": False, "error": "verb failed"}
                 self._send(200 if result.get("ok") else 400, result)
                 return
 
@@ -198,7 +363,8 @@ data:
             try:
                 text = run_agent(last_user(body))
             except Exception:
-                text = "Hands error:\n" + traceback.format_exc()[-1500:]
+                print("[shim] agent error\n" + traceback.format_exc()[-1500:], flush=True)
+                text = "Hands error (see shim logs)."
             if stream:
                 self.send_response(200)
                 self.send_header("Content-Type", "text/event-stream")
