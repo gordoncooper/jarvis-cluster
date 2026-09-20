@@ -8,3 +8,5 @@ resources:
   - piper-voice-map.yaml
   - homepage.yaml
   - jarvis-persona.yaml
+  - jarvis-orchestrator.yaml
+  - jarvis-glass.yaml
