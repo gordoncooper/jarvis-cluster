@@ -29,7 +29,11 @@ data:
         "/home/node/.openclaw/skills/lab-map",
     )
 
-    VERBS = ("cluster.health", "cluster.gpus", "lab.map")
+    TRUSTED_VERBS = ("cluster.health", "cluster.gpus", "lab.map")
+    CONFIRM_VERBS = ("apps.recycle_pod", "apps.restart_deploy")
+    VERBS = TRUSTED_VERBS + CONFIRM_VERBS
+    WRITE_NS = frozenset({"apps", "inference", "agents", "monitoring"})
+    NAME_RE = re.compile(r"^[a-z0-9]([-a-z0-9]*[a-z0-9])?$")
 
     SURFACES = [
         {"name": "Product glass", "url": "https://jarvis.lan", "for": "Daily talk, voice, memory"},
@@ -275,14 +279,109 @@ data:
         }
 
 
-    def run_verb(verb: str) -> dict:
+    def _validate_target(args: dict) -> tuple[str, str] | dict:
+        ns = str((args or {}).get("namespace") or "").strip()
+        name = str((args or {}).get("name") or "").strip()
+        if ns not in WRITE_NS:
+            return {"ok": False, "error": f"namespace not allowed: {ns or '(empty)'}"}
+        if not NAME_RE.match(name):
+            return {"ok": False, "error": f"bad name: {name or '(empty)'}"}
+        return ns, name
+
+
+    def resolve_pod_name(ns: str, name: str) -> tuple[str | None, str | None]:
+        """If name is a deploy/app prefix, resolve to a Running pod name."""
+        # Replica-set style pod names usually have a 5+ char hash segment.
+        parts = name.split("-")
+        if len(parts) >= 3 and len(parts[-1]) >= 5:
+            return name, None
+        out, err = run_cmd(["node", HEALTH, "find-pod", ns, name])
+        if err or not out:
+            return None, err or "pod not found"
+        return out.strip().splitlines()[0].strip(), None
+
+
+    def verb_recycle_pod(args: dict, confirmed: bool) -> dict:
+        target = _validate_target(args)
+        if isinstance(target, dict):
+            return target
+        ns, name = target
+        resolved, err = resolve_pod_name(ns, name)
+        if not resolved:
+            return {"ok": False, "verb": "apps.recycle_pod", "error": err or "pod not found"}
+        preview = {
+            "namespace": ns,
+            "name": resolved,
+            "requested": name,
+            "summary": f"recycle pod {ns}/{resolved}",
+        }
+        if not confirmed:
+            return {
+                "ok": False,
+                "verb": "apps.recycle_pod",
+                "class": "confirm",
+                "error": "confirm required",
+                "preview": preview,
+                "text": f"Confirm: recycle pod `{ns}/{resolved}`? Say yes or cancel.",
+            }
+        out, err = run_cmd(["node", HEALTH, "delete-pod", ns, resolved])
+        if err:
+            return {"ok": False, "verb": "apps.recycle_pod", "error": err}
+        text = (out or f"Deleted pod {ns}/{resolved}.").strip()
+        return {
+            "ok": True,
+            "verb": "apps.recycle_pod",
+            "class": "confirm",
+            "text": text if text.endswith(".") else text + ".",
+            "data": {"namespace": ns, "name": resolved, "action": "deleted"},
+        }
+
+
+    def verb_restart_deploy(args: dict, confirmed: bool) -> dict:
+        target = _validate_target(args)
+        if isinstance(target, dict):
+            return target
+        ns, name = target
+        preview = {
+            "namespace": ns,
+            "name": name,
+            "summary": f"restart deployment {ns}/{name}",
+        }
+        if not confirmed:
+            return {
+                "ok": False,
+                "verb": "apps.restart_deploy",
+                "class": "confirm",
+                "error": "confirm required",
+                "preview": preview,
+                "text": f"Confirm: restart deployment `{ns}/{name}`? Say yes or cancel.",
+            }
+        out, err = run_cmd(["node", HEALTH, "restart-deploy", ns, name])
+        if err:
+            return {"ok": False, "verb": "apps.restart_deploy", "error": err}
+        text = (out or f"Restarted deployment {ns}/{name}.").strip()
+        return {
+            "ok": True,
+            "verb": "apps.restart_deploy",
+            "class": "confirm",
+            "text": text if text.endswith(".") else text + ".",
+            "data": {"namespace": ns, "name": name, "action": "restarted"},
+        }
+
+
+    def run_verb(verb: str, args: dict | None = None, confirmed: bool = False) -> dict:
         verb = (verb or "").strip()
+        args = args or {}
         if verb == "cluster.health":
             return verb_cluster_health()
         if verb == "cluster.gpus":
             return verb_cluster_gpus()
         if verb == "lab.map":
             return verb_lab_map()
+        if verb == "apps.recycle_pod":
+            return verb_recycle_pod(args, confirmed)
+        if verb == "apps.restart_deploy":
+            return verb_restart_deploy(args, confirmed)
         return {"ok": False, "verb": verb, "error": "unknown verb"}
 
 
@@ -349,10 +448,16 @@ data:
 
             if path == "/v1/verbs":
                 try:
-                    result = run_verb(str(body.get("verb") or ""))
+                    args = body.get("args") if isinstance(body.get("args"), dict) else {}
+                    confirmed = bool(body.get("confirmed"))
+                    result = run_verb(str(body.get("verb") or ""), args, confirmed)
                 except Exception:
                     print("[shim] verb error\n" + traceback.format_exc()[-1500:], flush=True)
                     result = {"ok": False, "error": "verb failed"}
+                # Propose (confirm required) is 200 so orch can read preview.
+                if result.get("error") == "confirm required":
+                    self._send(200, result)
+                    return
                 self._send(200 if result.get("ok") else 400, result)
                 return
 

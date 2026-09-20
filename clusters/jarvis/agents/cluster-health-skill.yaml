@@ -12,40 +12,68 @@ data:
     Helpers (no kubectl, no curl):
       node /home/node/.openclaw/skills/cluster-health/k8s.js nodes
       node /home/node/.openclaw/skills/cluster-health/k8s.js pods
+      node /home/node/.openclaw/skills/cluster-health/k8s.js find-pod <ns> <prefix>
+      node /home/node/.openclaw/skills/cluster-health/k8s.js delete-pod <ns> <name>
+      node /home/node/.openclaw/skills/cluster-health/k8s.js restart-deploy <ns> <name>
       node /home/node/.openclaw/skills/cluster-metrics/prom.js up
       node /home/node/.openclaw/skills/cluster-metrics/prom.js nvidia_smi_temperature_gpu
       node /home/node/.openclaw/skills/cluster-metrics/prom.js nvidia_smi_memory_used_bytes
     Expect 6 Ready nodes: ctrl-01 gpu-01 gpu-02 data-01 data-02 apps-01.
     Quote helper output. Do not guess.
+    Product write verbs go through openai-shim with confirmed=true only (D-0023).
   k8s.js: |
     const fs = require("fs");
     const https = require("https");
     const token = fs.readFileSync("/var/run/secrets/kubernetes.io/serviceaccount/token", "utf8");
     const ca = fs.readFileSync("/var/run/secrets/kubernetes.io/serviceaccount/ca.crt");
-    function get(path) {
+
+    function req(method, path, body) {
       return new Promise((resolve, reject) => {
-        https.get({
+        const opts = {
           hostname: "kubernetes.default.svc",
           port: 443,
           path,
+          method: method || "GET",
           ca,
-          headers: { Authorization: "Bearer " + token, Accept: "application/json" },
-        }, (res) => {
+          headers: {
+            Authorization: "Bearer " + token,
+            Accept: "application/json",
+          },
+        };
+        let payload = null;
+        if (body !== undefined && body !== null) {
+          payload = Buffer.from(JSON.stringify(body));
+          opts.headers["Content-Type"] = "application/strategic-merge-patch+json";
+          opts.headers["Content-Length"] = payload.length;
+        }
+        const r = https.request(opts, (res) => {
           let b = "";
           res.on("data", (d) => { b += d; });
           res.on("end", () => {
-            if (res.statusCode >= 400) return reject(new Error(res.statusCode + " " + b.slice(0, 400)));
-            try { resolve(JSON.parse(b)); } catch (e) { reject(e); }
+            if (res.statusCode >= 400) {
+              return reject(new Error(res.statusCode + " " + b.slice(0, 400)));
+            }
+            if (!b) return resolve({});
+            try { resolve(JSON.parse(b)); } catch (e) { resolve({ raw: b }); }
           });
-        }).on("error", reject);
+        });
+        r.on("error", reject);
+        if (payload) r.write(payload);
+        r.end();
       });
     }
+
+    function get(path) { return req("GET", path); }
+
     const cmd = process.argv[2] || "nodes";
+    const a = process.argv[3];
+    const b = process.argv[4];
+
     if (cmd === "nodes") {
       get("/api/v1/nodes").then((j) => {
         for (const n of j.items) {
           const ready = (n.status.conditions || []).find((c) => c.type === "Ready") || {};
-          const ip = (n.status.addresses || []).filter((a) => a.type === "InternalIP").map((a) => a.address).join(",");
+          const ip = (n.status.addresses || []).filter((x) => x.type === "InternalIP").map((x) => x.address).join(",");
           console.log(n.metadata.name + "\tReady=" + ready.status + "\t" + ip);
         }
         console.log("count=" + j.items.length);
@@ -56,7 +84,47 @@ data:
         if (!bad.length) { console.log("all pods Running or Succeeded (" + j.items.length + " total)"); return; }
         for (const p of bad) console.log(p.metadata.namespace + "/" + p.metadata.name + "\t" + p.status.phase);
       }).catch((e) => { console.error(String(e)); process.exit(1); });
+    } else if (cmd === "find-pod") {
+      if (!a || !b) { console.error("usage: node k8s.js find-pod <ns> <prefix>"); process.exit(2); }
+      get("/api/v1/namespaces/" + encodeURIComponent(a) + "/pods").then((j) => {
+        const items = (j.items || []).filter((p) => {
+          const n = p.metadata.name;
+          const phase = p.status && p.status.phase;
+          return (n === b || n.startsWith(b + "-")) && phase === "Running";
+        });
+        if (!items.length) {
+          console.error("no Running pod matching " + a + "/" + b);
+          process.exit(1);
+        }
+        console.log(items[0].metadata.name);
+      }).catch((e) => { console.error(String(e)); process.exit(1); });
+    } else if (cmd === "delete-pod") {
+      if (!a || !b) { console.error("usage: node k8s.js delete-pod <ns> <name>"); process.exit(2); }
+      req("DELETE", "/api/v1/namespaces/" + encodeURIComponent(a) + "/pods/" + encodeURIComponent(b))
+        .then(() => { console.log("deleted " + a + "/" + b); })
+        .catch((e) => { console.error(String(e)); process.exit(1); });
+    } else if (cmd === "restart-deploy") {
+      if (!a || !b) { console.error("usage: node k8s.js restart-deploy <ns> <name>"); process.exit(2); }
+      const stamp = new Date().toISOString();
+      const patch = {
+        spec: {
+          template: {
+            metadata: {
+              annotations: {
+                "kubectl.kubernetes.io/restartedAt": stamp,
+              },
+            },
+          },
+        },
+      };
+      req(
+        "PATCH",
+        "/apis/apps/v1/namespaces/" + encodeURIComponent(a) + "/deployments/" + encodeURIComponent(b),
+        patch
+      )
+        .then(() => { console.log("restarted deploy " + a + "/" + b + " at " + stamp); })
+        .catch((e) => { console.error(String(e)); process.exit(1); });
     } else {
-      console.error("usage: node k8s.js nodes|pods");
+      console.error("usage: node k8s.js nodes|pods|find-pod|delete-pod|restart-deploy");
       process.exit(2);
     }
