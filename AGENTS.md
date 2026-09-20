@@ -18,10 +18,12 @@ Rules specific to this repo:
   second bible (D-0007). Keep it committed. Gitea-origin is enforced by
   `~/.agent-guard.sh`.
 
-Not everything on the cluster is in this repo. `jarvis.lan` and `noc.lan` are
-applied outside Flux from `jarvis-core/deploy/scripts/`. If you cannot find a
-workload's YAML here, that is why — check the live cluster before concluding it
-does not exist.
+Not everything on the cluster is in this repo. Older jarvis-core / noc install
+scripts may still exist on the cluster. Product glass + orchestrator are
+jarvis-app images; their Deployments belong under `clusters/jarvis/apps/` and
+reconcile via Flux (D-0021). Read the live object before editing YAML. Do not
+extend jarvis-core. If you cannot find a workload's YAML here, check the live
+cluster before concluding it does not exist.
 
 If this workspace is a **laptop GitHub clone**: it is a read-only cache. Do not
 push it as origin, and do not kubectl from a laptop. Edit on the bastion.
