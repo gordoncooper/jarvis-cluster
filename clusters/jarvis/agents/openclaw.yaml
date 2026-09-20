@@ -107,6 +107,15 @@ spec:
             - name: openai-shim
               mountPath: /shim
               readOnly: true
+            - name: skill-metrics
+              mountPath: /home/node/.openclaw/skills/cluster-metrics
+              readOnly: true
+            - name: skill-health
+              mountPath: /home/node/.openclaw/skills/cluster-health
+              readOnly: true
+            - name: skill-map
+              mountPath: /home/node/.openclaw/skills/lab-map
+              readOnly: true
           readinessProbe:
             httpGet:
               path: /healthz
