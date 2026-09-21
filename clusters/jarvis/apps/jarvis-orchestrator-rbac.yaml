@@ -1,0 +1,38 @@
+# Read-only Flux status for the orchestrator (D-0037).
+#
+# The whole grant. Before this the jarvis-orchestrator ServiceAccount had no
+# RBAC at all, which is what makes it auditable: this file is the complete
+# list of what the product brain may see in the Kubernetes API.
+#
+# get/list on two Flux resources in one namespace. No write verb, no other
+# API group, no pods, no secrets. `flux.status` reads Ready conditions and
+# the last applied revision; nothing else needs anything else.
+#
+# Why not OpenClaw, which already has broad cluster read: "is the house in
+# sync?" is asked when something is wrong, and OpenClaw is the component most
+# likely to be wrong — its pod holds a hostPort that races on restart. A
+# status read that depends on the flakiest component is not a status read.
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: jarvis-orchestrator-flux-read
+rules:
+  - apiGroups: [kustomize.toolkit.fluxcd.io]
+    resources: [kustomizations]
+    verbs: [get, list]
+  - apiGroups: [source.toolkit.fluxcd.io]
+    resources: [gitrepositories]
+    verbs: [get, list]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: jarvis-orchestrator-flux-read
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: jarvis-orchestrator-flux-read
+subjects:
+  - kind: ServiceAccount
+    name: jarvis-orchestrator
+    namespace: apps

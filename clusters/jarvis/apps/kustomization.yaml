@@ -9,4 +9,5 @@ resources:
   - homepage.yaml
   - jarvis-persona.yaml
   - jarvis-orchestrator.yaml
+  - jarvis-orchestrator-rbac.yaml
   - jarvis-glass.yaml
