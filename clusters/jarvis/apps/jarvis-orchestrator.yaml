@@ -40,7 +40,7 @@ spec:
         jarvis.role: apps
       containers:
         - name: orchestrator
-          image: docker.io/library/jarvis-orchestrator:v0.6.30
+          image: docker.io/library/jarvis-orchestrator:v0.6.31
           imagePullPolicy: Never
           env:
             - name: LITELLM_BASE
@@ -51,6 +51,15 @@ spec:
                   name: jarvis-orchestrator
                   key: LITELLM_API_KEY
             - name: TALKER_MODEL
+              value: jarvis-local
+            # Intent router (D-0033 slice 3). off | shadow | on.
+            # shadow logs the classifier beside the deterministic route and
+            # acts on neither, so the 7B is scored against real traffic before
+            # it can change a reply. Local GPU only — routing must survive the
+            # house being sick, so it never depends on an internet model.
+            - name: ROUTER_CLASSIFIER
+              value: shadow
+            - name: CLASSIFIER_MODEL
               value: jarvis-local
             - name: MOCK_LLM
               value: "0"
