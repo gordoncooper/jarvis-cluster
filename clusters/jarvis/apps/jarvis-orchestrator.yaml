@@ -40,7 +40,7 @@ spec:
         jarvis.role: apps
       containers:
         - name: orchestrator
-          image: docker.io/library/jarvis-orchestrator:v0.6.18
+          image: docker.io/library/jarvis-orchestrator:v0.6.19
           imagePullPolicy: Never
           env:
             - name: LITELLM_BASE
@@ -58,6 +58,18 @@ spec:
               value: /etc/jarvis/persona.txt
             - name: BRIEFING_PATH
               value: /etc/jarvis/briefing.md
+            # D-0012: only the orchestrator reads Prometheus; glass sees /v1/pulse.
+            - name: PROMETHEUS_BASE
+              value: http://prometheus.monitoring.svc.cluster.local:9090
+            # Real weather for the CMD header. Unset lat/lon hides the chip.
+            - name: WEATHER_LAT
+              value: "34.05"
+            - name: WEATHER_LON
+              value: "-118.24"
+            - name: WEATHER_PLACE
+              value: Los Angeles
+            - name: WEATHER_TZ
+              value: America/Los_Angeles
             - name: MEMORY_DB_PATH
               value: /var/lib/jarvis/promoted.sqlite
             - name: SESSION_DB_PATH
