@@ -58,7 +58,7 @@ spec:
             # it can change a reply. Local GPU only — routing must survive the
             # house being sick, so it never depends on an internet model.
             - name: ROUTER_CLASSIFIER
-              value: shadow
+              value: "on"
             - name: CLASSIFIER_MODEL
               value: jarvis-local
             - name: MOCK_LLM
