@@ -26,10 +26,11 @@ git/image tags into this file.
 | k3s | single-server etcd on ctrl-01 (`K3S` in infra VERSION) |
 | Glass | **jarvis.lan** is the product; **noc.lan** is the operator surface (D-0002). chat.lan and agent.lan are break-glass. |
 
-`jarvis.lan` and `noc.lan` are served by the `jarvis-core` / `jarvis-noc`
-deployments, which are **not** in this repo and **not** reconciled by Flux —
-they are applied by `jarvis-core/deploy/scripts/install-*.sh`. `home.lan`
-(`apps/homepage.yaml`) is legacy and retiring into noc.lan; it still serves.
+`noc.lan` is served by `jarvis-noc`, reconciled from this repo since D-0038.
+Its **image** is built out of band by `jarvis-infra apps/jarvis-noc/install-noc.sh`,
+because `imagePullPolicy: Never` means Flux cannot pull it — build first, then
+reconcile. `home.lan` (`apps/homepage.yaml`) is legacy and retiring into
+noc.lan; it still serves.
 
 ## Use cases
 
