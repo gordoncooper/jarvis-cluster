@@ -92,7 +92,7 @@ flowchart TB
   Inf --> Lit["litellm.yaml  litellm-config.yaml"]
   Inf --> DP["device-plugin.yaml"]
   Apps --> OW["open-webui.yaml"]
-  Apps --> Hud["jarvis-webui-hud.yaml"]
+  Apps --> Noc["jarvis-noc.yaml"]
   Apps --> Home["homepage.yaml"]
   Apps --> Pip["piper.yaml"]
   Ag --> OC["openclaw.yaml  rbac.yaml"]
@@ -255,8 +255,9 @@ Keep `clusters/jarvis/apps/homepage.yaml` in lockstep with
 `jarvis-infra/apps/jarvis-home/homepage.yaml`.
 `check-contract.sh` compares both.
 
-HUD chrome for chat.lan is `clusters/jarvis/apps/jarvis-webui-hud.yaml`
-(ConfigMap inject). Chrome is not routing.
+chat.lan is **stock** Open WebUI — no injected chrome, no theme ConfigMap
+(D-0039). It is break-glass, and every line of skin was a line to re-apply
+after each upstream digest bump.
 
 ## Data plane
 
