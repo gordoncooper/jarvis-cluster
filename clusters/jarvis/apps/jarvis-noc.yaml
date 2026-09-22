@@ -1,0 +1,110 @@
+# noc.lan — the operator surface, adopted into Flux (D-0038).
+#
+# Was applied by hand from jarvis-core/deploy/scripts/install-noc.sh and
+# existed in no repository. VISION makes this surface load-bearing: it has to
+# render when the brain, LiteLLM or Ollama are down, which is exactly when
+# nobody wants to discover its definition was only ever in the live cluster.
+#
+# The image is built and imported by jarvis-infra apps/jarvis-noc/install-noc.sh
+# — imagePullPolicy is Never, so Flux cannot pull it. Build first, then let
+# Flux reconcile.
+# Apply from agent@bastion. Flux must not own this file.
+# TLS secret lan-tls already exists in namespace apps (home.lan).
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: jarvis-noc
+  namespace: apps
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: jarvis-noc-read
+rules:
+  - apiGroups: [""]
+    resources: [nodes, pods, events]
+    verbs: [get, list, watch]
+  - apiGroups: ["apps"]
+    resources: [deployments]
+    verbs: [get, list, watch]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: jarvis-noc-read
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: jarvis-noc-read
+subjects:
+  - kind: ServiceAccount
+    name: jarvis-noc
+    namespace: apps
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: jarvis-noc
+  namespace: apps
+spec:
+  replicas: 1
+  selector:
+    matchLabels: { app: jarvis-noc }
+  strategy: { type: Recreate }
+  template:
+    metadata:
+      labels: { app: jarvis-noc }
+    spec:
+      serviceAccountName: jarvis-noc
+      nodeSelector:
+        jarvis.role: control
+      containers:
+        - name: noc
+          image: docker.io/library/jarvis-noc:v0.1.0
+          imagePullPolicy: Never
+          env:
+            - name: NOC_VERSION
+              value: v0.1.0
+          ports:
+            - { name: http, containerPort: 8080 }
+          readinessProbe:
+            httpGet: { path: /health, port: http }
+            initialDelaySeconds: 2
+            periodSeconds: 5
+            timeoutSeconds: 3
+            failureThreshold: 6
+          resources:
+            requests: { cpu: 20m, memory: 64Mi }
+            limits: { memory: 256Mi }
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: jarvis-noc
+  namespace: apps
+spec:
+  selector: { app: jarvis-noc }
+  ports:
+    - { name: http, port: 8080, targetPort: http }
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: jarvis-noc
+  namespace: apps
+  annotations:
+    traefik.ingress.kubernetes.io/router.entrypoints: web,websecure
+spec:
+  ingressClassName: traefik
+  tls:
+    - hosts: [noc.lan]
+      secretName: lan-tls
+  rules:
+    - host: noc.lan
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service: { name: jarvis-noc, port: { number: 8080 } }

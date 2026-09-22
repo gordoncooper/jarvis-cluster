@@ -11,3 +11,4 @@ resources:
   - jarvis-orchestrator.yaml
   - jarvis-orchestrator-rbac.yaml
   - jarvis-glass.yaml
+  - jarvis-noc.yaml
