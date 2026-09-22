@@ -34,10 +34,13 @@ spec:
             - name: WEBUI_SECRET_KEY
               valueFrom: { secretKeyRef: { name: open-webui, key: WEBUI_SECRET_KEY } }
             - { name: DEFAULT_MODELS, value: jarvis }
-            - name: DEFAULT_SYSTEM_PROMPT
-              valueFrom:
-                configMapKeyRef: { name: jarvis-persona, key: system.txt }
-            - { name: ENABLE_SIGNUP, value: "true" }
+            # DEFAULT_SYSTEM_PROMPT is not set: it does not inject a system
+            # message per request (LESSONS). Character on chat.lan comes from
+            # the Ollama Modelfile SYSTEM and the jarvis_persona filter.
+            # Signup off: two accounts exist and this is a break-glass console
+            # on a LAN with an admin on it. Turning it on is a deliberate act —
+            # REBUILD documents the bootstrap.
+            - { name: ENABLE_SIGNUP, value: "false" }
             - { name: WEBUI_AUTH, value: "true" }
             - { name: ENABLE_NATIVE_FUNCTION_CALLING, value: "false" }
             - { name: ENABLE_MODEL_FILTER, value: "true" }
@@ -61,8 +64,6 @@ spec:
               readOnly: true
             - { name: data, mountPath: /app/backend/data }
             - { name: learned, mountPath: /learned }
-            - { name: hud, mountPath: /hud, readOnly: true }
-          command: ["/bin/bash", "/hud/inject-hud.sh"]
           readinessProbe:
             httpGet: { path: /health, port: http }
             initialDelaySeconds: 30
@@ -77,10 +78,6 @@ spec:
           hostPath: { path: /cluster/local/open-webui, type: DirectoryOrCreate }
         - name: learned
           hostPath: { path: /cluster/local/openclaw, type: DirectoryOrCreate }
-        - name: hud
-          configMap:
-            name: jarvis-webui-hud
-            defaultMode: 0755
 ---
 apiVersion: v1
 kind: Service
