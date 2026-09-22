@@ -42,10 +42,20 @@ spec:
             # REBUILD documents the bootstrap.
             - { name: ENABLE_SIGNUP, value: "false" }
             - { name: WEBUI_AUTH, value: "true" }
-            - { name: ENABLE_NATIVE_FUNCTION_CALLING, value: "false" }
-            - { name: ENABLE_MODEL_FILTER, value: "true" }
+            # ENABLE_NATIVE_FUNCTION_CALLING, ENABLE_MODEL_FILTER and
+            # MODEL_FILTER_LIST were set here and do not exist in Open WebUI
+            # v0.11.3 — zero references in the codebase. Removed rather than
+            # left as false comfort (D-0039).
+            #
+            # Tool-calling is actually prevented by LiteLLM, which sets
+            # supports_function_calling:false and drops tools/tool_choice/
+            # functions for jarvis-local, plus no tools installed here and
+            # USER_PERMISSIONS_WORKSPACE_TOOLS_ACCESS=false below. That is the
+            # real guard for the scar VISION records; it is not this env var.
+            #
+            # The model picker is restricted by openai.api_configs.model_ids in
+            # sqlite, written by scripts/seed-webui-ui.sh — not by an env var.
             - { name: ENABLE_EVALUATION_ARENA_MODELS, value: "false" }
-            - { name: MODEL_FILTER_LIST, value: "jarvis;jarvis-local;jarvis-grok;jarvis-grok-code;jarvis-hands" }
             - { name: USER_PERMISSIONS_WORKSPACE_TOOLS_ACCESS, value: "false" }
             - { name: ENABLE_FOLLOW_UP_GENERATION, value: "false" }
             - { name: WEBUI_URL, value: "https://chat.lan" }
