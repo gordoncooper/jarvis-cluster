@@ -42,8 +42,9 @@ noc.lan; it still serves.
 - **See the rack** — https://noc.lan (https://home.lan is legacy) and https://grafana.lan.
 - **GitOps** — edit YAML as `agent`, push Gitea, Flux reconciles.
 
-Do not add exact-phrase `keyword_tier_rules`. Prefer vendor knobs
-(LiteLLM config, OpenClaw skills, k8s RBAC).
+There is no LiteLLM router to add keyword rules to any more (D-0040) — it
+serves five plain models. Prefer vendor knobs (LiteLLM config, OpenClaw
+skills, k8s RBAC).
 
 ## GitOps path
 
@@ -216,9 +217,10 @@ sequenceDiagram
 ```
 
 
-Default alias is `jarvis` (LiteLLM `complexity_router`).
-Picker stays as Tony's hatch. Prefixes `local:` `hands:` `code:` `grok:`
-are an Open WebUI filter — do not grow that pet. Do not add keyword rules.
+chat.lan defaults to `jarvis-local` and the picker shows real model ids. The
+`jarvis` auto-router was deleted (D-0040); LiteLLM serves five plain models.
+Prefixes `local:` `hands:` `code:` `grok:` are an Open WebUI filter and are the
+only routing here — do not grow that pet.
 
 Ollama, Piper, LiteLLM, monitoring images are **digest-pinned**
 (`:tag@sha256:…`, `IfNotPresent`). Homepage is **not** pulled — see below.
