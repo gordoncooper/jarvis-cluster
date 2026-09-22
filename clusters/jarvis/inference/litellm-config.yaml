@@ -43,31 +43,5 @@ data:
           additional_drop_params: ["max_completion_tokens"]
         rpm: 10
         tpm: 30000
-      - model_name: jarvis
-        litellm_params:
-          model: auto_router/complexity_router
-          drop_params: true
-          complexity_router_config:
-            tiers:
-              SIMPLE: jarvis-local
-              MEDIUM: jarvis-local
-              COMPLEX: jarvis-hands
-              REASONING: jarvis-grok-code
-            custom_technical_keywords: [kubectl, flux, k3s, kubernetes, helm, etcd, traefik]
-            escalation_keywords: []
-            keyword_tier_rules:
-
-              - keywords: [restart, rollout, recycle, delete pod, are nodes, cluster-health, kubectl get, kubectl describe, kubectl rollout, /cluster/local, list directories, hostpath, ls /cluster, ls -la, apps-01 disk, files on apps-01, running pods, get pods, nodes ready, cluster status, status of the cluster, live data, grab live, pod status, pods up, are the pods, nodes up, cluster up, vram, nvidia-smi, gpu usage]
-                tier: COMPLEX
-              - keywords: [kustomization, write a flux, patch yaml, helm template, debug yaml, deployment yaml]
-                tier: REASONING
-            session_affinity: false
-            session_affinity_ttl_seconds: 3600
-            return_raw_model_name: true
-            classifier_type: heuristic
-            reminder_markers:
-              - open: "<<<begin_ctx>>>"
-                close: "<<<end_ctx>>>"
-          complexity_router_default_model: jarvis-local
     general_settings:
       master_key: os.environ/LITELLM_MASTER_KEY

@@ -33,7 +33,10 @@ spec:
               valueFrom: { secretKeyRef: { name: open-webui, key: OPENAI_API_KEY } }
             - name: WEBUI_SECRET_KEY
               valueFrom: { secretKeyRef: { name: open-webui, key: WEBUI_SECRET_KEY } }
-            - { name: DEFAULT_MODELS, value: jarvis }
+            # jarvis-local, not the `jarvis` auto-router: chat.lan is
+            # break-glass and predictability beats cleverness. Escalate on
+            # purpose with the jarvis_route prefixes (D-0040).
+            - { name: DEFAULT_MODELS, value: jarvis-local }
             # DEFAULT_SYSTEM_PROMPT is not set: it does not inject a system
             # message per request (LESSONS). Character on chat.lan comes from
             # the Ollama Modelfile SYSTEM and the jarvis_persona filter.
