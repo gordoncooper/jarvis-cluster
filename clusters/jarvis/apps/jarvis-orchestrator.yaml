@@ -40,7 +40,7 @@ spec:
         jarvis.role: apps
       containers:
         - name: orchestrator
-          image: docker.io/library/jarvis-orchestrator:v0.6.43
+          image: docker.io/library/jarvis-orchestrator:v0.6.44
           imagePullPolicy: Never
           env:
             - name: LITELLM_BASE
@@ -106,6 +106,9 @@ spec:
               readOnly: true
             - name: jarvis-data
               mountPath: /var/lib/jarvis
+            - name: jarvis-files
+              mountPath: /var/jarvis/files
+              readOnly: true
           readinessProbe:
             httpGet: { path: /readyz, port: http }
             initialDelaySeconds: 2
@@ -125,6 +128,12 @@ spec:
           hostPath:
             path: /mnt/nfs/jarvis
             type: DirectoryOrCreate
+        # D-0042. This subdirectory only, read-only, so a listing cannot
+        # step up into promoted.sqlite or sessions.sqlite.
+        - name: jarvis-files
+          hostPath:
+            path: /mnt/nfs/jarvis/files
+            type: Directory
 ---
 apiVersion: v1
 kind: Service
