@@ -16,7 +16,7 @@ spec:
         jarvis.role: apps
       containers:
         - name: glass
-          image: docker.io/library/jarvis-glass:v0.6.62
+          image: docker.io/library/jarvis-glass:v0.6.63
           imagePullPolicy: Never
           ports:
             - { name: http, containerPort: 8080 }
