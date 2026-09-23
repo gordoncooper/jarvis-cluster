@@ -38,8 +38,8 @@ spec:
             # purpose with the jarvis_route prefixes (D-0040).
             - { name: DEFAULT_MODELS, value: jarvis-local }
             # DEFAULT_SYSTEM_PROMPT is not set: it does not inject a system
-            # message per request (LESSONS). Character on chat.lan comes from
-            # the Ollama Modelfile SYSTEM and the jarvis_persona filter.
+            # message per request. chat.lan is stock Open WebUI (D-0039).
+            # There is no persona filter on this surface.
             # Signup off: two accounts exist and this is a break-glass console
             # on a LAN with an admin on it. Turning it on is a deliberate act —
             # REBUILD documents the bootstrap.
