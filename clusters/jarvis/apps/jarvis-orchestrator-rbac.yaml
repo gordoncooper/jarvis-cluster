@@ -4,9 +4,12 @@
 # RBAC at all, which is what makes it auditable: this file is the complete
 # list of what the product brain may see in the Kubernetes API.
 #
-# get/list on two Flux resources in one namespace. No write verb, no other
-# API group, no pods, no secrets. `flux.status` reads Ready conditions and
-# the last applied revision; nothing else needs anything else.
+# get/list on two Flux resources. No write verb, no secrets.
+# `flux.status` reads Ready conditions and the last applied revision.
+#
+# D-0041 adds namespaced Roles, not a wider ClusterRole: get and list on
+# pods, and get on pods/log, in apps, inference, agents, and monitoring.
+# flux-system and kube-system are not among them. pods/exec is not granted.
 #
 # Why not OpenClaw, which already has broad cluster read: "is the house in
 # sync?" is asked when something is wrong, and OpenClaw is the component most
@@ -32,6 +35,118 @@ roleRef:
   apiGroup: rbac.authorization.k8s.io
   kind: ClusterRole
   name: jarvis-orchestrator-flux-read
+subjects:
+  - kind: ServiceAccount
+    name: jarvis-orchestrator
+    namespace: apps
+---
+# D-0041. One Role per namespace the product may read logs from.
+# get+list pods so a deployment name can be resolved to a pod, and get
+# pods/log for the tail. Nothing else. Not exec, not delete, not secrets,
+# and not flux-system.
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: jarvis-orchestrator-logs
+  namespace: apps
+rules:
+  - apiGroups: [""]
+    resources: [pods]
+    verbs: [get, list]
+  - apiGroups: [""]
+    resources: [pods/log]
+    verbs: [get]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: jarvis-orchestrator-logs
+  namespace: apps
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: jarvis-orchestrator-logs
+subjects:
+  - kind: ServiceAccount
+    name: jarvis-orchestrator
+    namespace: apps
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: jarvis-orchestrator-logs
+  namespace: inference
+rules:
+  - apiGroups: [""]
+    resources: [pods]
+    verbs: [get, list]
+  - apiGroups: [""]
+    resources: [pods/log]
+    verbs: [get]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: jarvis-orchestrator-logs
+  namespace: inference
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: jarvis-orchestrator-logs
+subjects:
+  - kind: ServiceAccount
+    name: jarvis-orchestrator
+    namespace: apps
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: jarvis-orchestrator-logs
+  namespace: agents
+rules:
+  - apiGroups: [""]
+    resources: [pods]
+    verbs: [get, list]
+  - apiGroups: [""]
+    resources: [pods/log]
+    verbs: [get]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: jarvis-orchestrator-logs
+  namespace: agents
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: jarvis-orchestrator-logs
+subjects:
+  - kind: ServiceAccount
+    name: jarvis-orchestrator
+    namespace: apps
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: jarvis-orchestrator-logs
+  namespace: monitoring
+rules:
+  - apiGroups: [""]
+    resources: [pods]
+    verbs: [get, list]
+  - apiGroups: [""]
+    resources: [pods/log]
+    verbs: [get]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: jarvis-orchestrator-logs
+  namespace: monitoring
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: jarvis-orchestrator-logs
 subjects:
   - kind: ServiceAccount
     name: jarvis-orchestrator
