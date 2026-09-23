@@ -9,7 +9,7 @@ Metal, Ansible, scripts, and the homepage **image** live in
 [gordoncooper/jarvis-infra](https://github.com/gordoncooper/jarvis-infra).
 
 This file is the map of **what Flux applies**. Operator contract, discover,
-and rebuild live in infra (`AGENTS.md`, `docs/COPILOT.md`, `docs/OPERATING.md`).
+and rebuild live in infra (`AGENTS.md`, `docs/OPERATING.md`).
 This repo's [AGENTS.md](AGENTS.md) is a stub — no second bible.
 
 If you opened a **laptop GitHub clone**: it is a cache. Do not `git push`
@@ -303,10 +303,8 @@ Example — digest pin lives on the container `image:` field as
 Scripts (`check-contract.sh`, `verify-jarvis.sh`, backup, discover) live in
 `~/jarvis-infra/scripts/`. This repo is YAML only.
 
-- [COPILOT](https://github.com/gordoncooper/jarvis-infra/blob/main/docs/COPILOT.md)
 - [OPERATING](https://github.com/gordoncooper/jarvis-infra/blob/main/docs/OPERATING.md)
 - [INTERACT](https://github.com/gordoncooper/jarvis-infra/blob/main/docs/INTERACT.md)
 - [REBUILD](https://github.com/gordoncooper/jarvis-infra/blob/main/docs/REBUILD.md)
 - [RESTORE](https://github.com/gordoncooper/jarvis-infra/blob/main/docs/RESTORE.md)
 - [LESSONS](https://github.com/gordoncooper/jarvis-infra/blob/main/docs/LESSONS.md)
-- [PLAN](https://github.com/gordoncooper/jarvis-infra/blob/main/docs/PLAN.md)
